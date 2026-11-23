@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HerMoney">
+<meta name="theme-color" content="#2563eb">
+<title>HerMoney</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<section id="auth" class="center hidden">
+  <div class="panel narrow">
+    <div class="brand big">♡ HerMoney</div>
+    <form id="form-login">
+      <input name="email" type="email" placeholder="Email" required>
+      <input name="password" type="password" placeholder="Password (min. 6 karakter)" required minlength="6">
+      <button class="primary">Masuk</button>
+      <button type="button" id="btn-signup" class="ghost">Daftar akun baru</button>
+    </form>
+  </div>
+</section>
+
+<section id="onboard" class="center hidden">
+  <div class="panel narrow">
+    <h2>Selamat datang</h2>
+    <form id="form-onboard" style="display:flex;flex-direction:column;gap:12px">
+      <input name="name" placeholder="Nama panggilan (misal: Ayah / Bunda)" required>
+      <label class="radio"><input type="radio" name="mode" value="create" checked> Buat keluarga baru</label>
+      <label class="radio"><input type="radio" name="mode" value="join"> Gabung keluarga (pakai kode)</label>
+      <input name="family" placeholder="Nama keluarga, atau kode undangan" required>
+      <button class="primary">Lanjut</button>
+    </form>
+  </div>
+</section>
+
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand">♡ HerMoney</div>
+    <button class="nav active" data-view="dashboard">Dashboard</button>
+    <button class="nav" data-view="transaksi">Transaksi</button>
+    <button class="nav" data-view="rekening">Rekening</button>
+    <button class="nav" data-view="pengaturan">Pengaturan</button>
+  </aside>
+  <main>
+    <header class="top">
+      <div><h1 id="title"></h1><p id="sub" class="muted"></p></div>
+      <input type="month" id="month" style="width:auto">
+    </header>
+    <div id="banner" class="banner hidden"></div>
+    <section id="view-dashboard" class="view"></section>
+    <section id="view-transaksi" class="view hidden"></section>
+    <section id="view-rekening" class="view hidden"></section>
+    <section id="view-pengaturan" class="view hidden"></section>
+  </main>
+</div>
+
+<dialog id="dlg-withdraw">
+  <form id="form-withdraw">
+    <h3 style="margin:0">Catat Tarik Tunai</h3>
+    <input type="hidden" name="pendingId">
+    <input name="amount" type="number" inputmode="numeric" placeholder="Jumlah (Rp)" required min="1">
+    <label>Dari rekening <select name="account"></select></label>
+    <div class="modes">
+      <label class="radio"><input type="radio" name="mode" value="wallet" checked> Masuk dompet (belum dipakai)</label>
+      <label class="radio"><input type="radio" name="mode" value="spend"> Sudah dibelanjakan</label>
+    </div>
+    <div id="wd-spend" class="hidden">
+      <input name="desc" placeholder="Untuk apa? misal: bayar parkir">
+      <select name="category"></select>
+    </div>
+    <label>Dompet tujuan <select name="cash"></select></label>
+    <div class="row-btn">
+      <button type="button" class="ghost" data-close>Batal</button>
+      <button class="primary">Simpan</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast"></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
