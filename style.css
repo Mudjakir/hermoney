@@ -152,9 +152,12 @@ h3{margin:0}
 .mi-ic{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:none}
 .mi-ic .ic{width:22px;height:22px}
 .mi-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.mi-b small{color:var(--mut);font-size:13px}
-.mi-b b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mi-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.mi-b small{color:var(--mut);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi-b b{font-weight:700;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;word-break:break-word}
+.mi-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
+.mi-r2{display:flex;align-items:center;gap:2px}
+.acc-row small,.acc-row b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-row .bal{flex:none}
 .only-m{display:none}
 
 /* ===== Dashboard, rekening, laporan ===== */
@@ -188,7 +191,7 @@ h3{margin:0}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
 .banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#fff7e0;color:#92400e;padding:14px 18px;border-radius:18px;margin-bottom:18px;font-weight:500}
 .notice{background:#fff7e0;color:#92400e;border-radius:16px;padding:16px 18px;line-height:1.5}
-.code{letter-spacing:3px;font-weight:800;background:var(--soft);color:var(--blue);padding:6px 14px;border-radius:10px}
+.code{display:inline-block;line-height:1.3;margin:6px 0 0;letter-spacing:3px;font-weight:800;background:var(--soft);color:var(--blue);padding:7px 14px;border-radius:10px}
 .prog-wrap{margin-top:8px}
 
 /* ===== Dialog ===== */
@@ -212,7 +215,7 @@ dialog form{display:flex;flex-direction:column;gap:14px}
   .top{margin-bottom:14px}
   .greet{display:none}
   .top{gap:8px}
-  .m-logo{display:flex;font-size:19px;gap:5px;flex:none}
+  .m-logo{display:flex;font-size:19px;gap:5px;flex:none;min-width:0}
   .m-logo .ic{width:24px;height:24px}
   .top-r{margin-left:auto;gap:8px;min-width:0}
   .bell,.avatar{width:38px;height:38px;flex:none}
@@ -220,8 +223,43 @@ dialog form{display:flex;flex-direction:column;gap:14px}
   .pill-select.month{height:38px;padding:0 9px;font-size:12.5px;gap:5px;min-width:0}
   .pill-select.month .ic{width:16px;height:16px}
   .pill-select.month .ic:last-child{display:none}
-  .pill-select.month select{max-width:84px}
-  .mi-b b{white-space:normal;overflow:visible}
+  .pill-select.month select{max-width:78px;width:78px}
+  .m-logo span:not(.ic){}
+  /* daftar transaksi */
+  .mi{gap:12px;padding:13px 0}
+  .mi-ic{width:42px;height:42px}
+  .mi-ic .ic{width:20px;height:20px}
+  .mi-b b{font-size:14.5px;line-height:1.3}
+  .mi-b small{font-size:12.5px}
+  .mi-r{gap:5px}
+  .mi-r .amt{font-size:14px}
+  .mi-r .chip{font-size:11.5px;padding:3px 9px}
+  .mi-r .dots{width:28px;height:28px;margin-right:-6px}
+  .mi-r .dots .ic{width:18px;height:18px}
+  .mi-r .pill{padding:6px 14px}
+  .acc-row{gap:12px}
+  .acc-row .mi-ic{width:40px;height:40px}
+  .acc-row .bal{font-size:15px}
+
+  /* kartu saldo */
+
+  /* form: tombol penuh selebar kartu */
+  .stack > .row-btn{flex-direction:column;align-items:stretch;gap:12px}
+  .stack > .row-btn .btn-primary,.stack > .row-btn .btn-ghost{width:100%}
+  dialog{padding:20px;border-radius:24px}
+  .seg button{font-size:12.5px;padding:10px 2px;white-space:nowrap}
+  .row-btn.end{flex-wrap:nowrap}
+  .row-btn.end > button{flex:1;padding:0 12px}
+  #form-edit > .row-btn{flex-direction:column-reverse;align-items:stretch;gap:10px}
+  #form-edit > .row-btn > span.row-btn{display:flex;flex-wrap:nowrap}
+  #form-edit > .row-btn > span.row-btn > button{flex:1;padding:0 12px}
+  #form-edit > .row-btn > .btn-danger{justify-content:center}
+
+  /* laporan & anggaran */
+  .bar-top{gap:8px}
+  .bar-top span.nm{font-size:14px;min-width:0}
+  .bar-top b{font-size:14px}
+  .bar-top small{font-size:12px;min-width:30px;text-align:right}
   .m-scope{display:flex;gap:10px;margin-bottom:14px}
   .m-scope .scope-b{padding:10px 12px;border-radius:16px;flex:1}
   .m-scope .scope-b .ic{width:22px;height:22px}
@@ -236,17 +274,17 @@ dialog form{display:flex;flex-direction:column;gap:14px}
   .page-head .btn-primary{width:100%}
   .sum-d{display:none}
   .sum-m{display:block}
-  .hero{position:relative;overflow:hidden;border-radius:24px;padding:20px;color:#fff;background:linear-gradient(135deg,#59a2ff,#2767ee);box-shadow:0 14px 30px rgba(37,99,235,.3)}
+  .hero{position:relative;overflow:hidden;border-radius:24px;padding:18px 18px 20px;color:#fff;background:linear-gradient(135deg,#59a2ff,#2767ee);box-shadow:0 14px 30px rgba(37,99,235,.3)}
   .hero small{display:flex;align-items:center;gap:8px;font-size:14px;opacity:.95}
-  .hero b{display:block;margin-top:6px;font-size:32px;font-weight:800;letter-spacing:-.5px}
+  .hero b{display:block;margin-top:6px;font-size:clamp(24px,7.6vw,31px);font-weight:800;letter-spacing:-.5px;position:relative;z-index:1;white-space:nowrap}
   .hero .eye{color:#fff;display:inline-grid}
   .hero .eye .ic{width:18px;height:18px}
-  .hero-ic{position:absolute;right:14px;top:50%;transform:translateY(-50%);opacity:.35}
-  .hero-ic .ic{width:84px;height:84px;stroke-width:1.4}
+  .hero-ic{position:absolute;right:16px;top:14px;opacity:.32}
+  .hero-ic .ic{width:40px;height:40px;stroke-width:1.8}
   .mini{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
   .mc{padding:16px 10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
   .mc small{color:#42517a;font-size:12.5px}
-  .mc b{font-size:17px;font-weight:800}
+  .mc b{font-size:clamp(13px,4.1vw,17px);font-weight:800;white-space:nowrap}
   .circ-s{width:42px;height:42px;border-radius:50%;display:grid;place-items:center}
   .circ-s .ic{width:22px;height:22px;stroke-width:2.3}
 
@@ -254,8 +292,10 @@ dialog form{display:flex;flex-direction:column;gap:14px}
   .form-grid{grid-template-columns:1fr}
   .filters{gap:10px}
   .search{min-width:0;width:100%;flex:none}
-  .pills{flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:4px;-webkit-overflow-scrolling:touch}
-  .pills .pill-select{flex:none;height:42px;font-size:13.5px}
+  .pills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%}
+  .pills .pill-select{min-width:0}
+  .pills .pill-select{width:100%;height:44px;font-size:13.5px;padding:0 12px;gap:8px}
+  .pills .pill-select select{flex:1 1 0;min-width:0;max-width:none;width:0;text-overflow:ellipsis}
   .only-d{display:none}
   .only-m{display:block}
   .tbl-wrap{padding:6px 16px 16px}
@@ -264,14 +304,24 @@ dialog form{display:flex;flex-direction:column;gap:14px}
   .pg{gap:6px}
 
   .tabbar{
-    display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:30;
     background:rgba(255,255,255,.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
     border-radius:26px 26px 0 0;box-shadow:0 -8px 30px rgba(37,99,235,.14);
     padding:8px 8px calc(8px + env(safe-area-inset-bottom));
   }
-  .tab{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;font-size:12px;color:#7a89aa;font-weight:500}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;font-size:12px;color:#7a89aa;font-weight:500;min-width:0;white-space:nowrap}
   .tab .ic{width:24px;height:24px}
   .tab.active{color:var(--blue);font-weight:700}
   #toast{bottom:100px}
   .trend{height:160px;gap:8px}
+}
+
+@media (max-width:350px){
+  .m-logo{font-size:0;gap:0}
+  .m-logo .ic{width:30px;height:30px}
+  .pill-select.month select{max-width:84px;width:84px}
+  .mc{padding:14px 8px}
+  .tab{font-size:11px}
+  .pills .pill-select{padding:0 10px;gap:6px;font-size:13px}
+  .pills .pill-select .ic:last-child{display:none}
 }
