@@ -316,7 +316,7 @@ function miItem(t) {
     : `${labelChip(t, v)}${t.owner_id === myId() ? `<button class="dots" data-edit="${t.id}" aria-label="Aksi">${ic('dots')}</button>` : ''}`;
   return `<div class="mi">
     <span class="mi-ic" style="background:${bg};color:${fg}">${ic(i)}</span>
-    <div class="mi-b"><b>${esc(v.title)}</b><small>${fmtDate(t.txn_date)}${other}</small></div>
+    <div class="mi-b"><small>${fmtDate(t.txn_date)}${other}</small><b>${esc(v.title)}</b></div>
     <div class="mi-r"><span class="amt ${v.cls}">${v.amount}</span><span class="mi-r2">${act}</span></div>
   </div>`;
 }
