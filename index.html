@@ -15,7 +15,7 @@
 <script>
 (function(){try{var m=localStorage.getItem('hm_theme')||'auto';var d=m==='dark'||(m==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();
 </script>
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
@@ -91,7 +91,7 @@
       <button type="button" data-addtype="income">Pemasukan</button>
       <button type="button" data-addtype="withdrawal">Tarik tunai</button>
     </div>
-    <input class="inp big" name="amount" type="number" inputmode="numeric" placeholder="Rp 0" required min="1">
+    <input class="inp big" name="amount" type="text" inputmode="numeric" autocomplete="off" data-money placeholder="Rp 0" required>
     <input class="inp" name="desc" placeholder="Keterangan, misal: beli token listrik" required autocomplete="off">
     <label class="fld">Kategori (otomatis dari keterangan)
       <select class="inp" name="category"></select>
@@ -112,7 +112,7 @@
   <form id="form-withdraw">
     <div class="dlg-h"><h3>Catat Tarik Tunai</h3><button type="button" class="x" data-close aria-label="Tutup">✕</button></div>
     <input type="hidden" name="pendingId">
-    <input class="inp big" name="amount" type="number" inputmode="numeric" placeholder="Rp 0" required min="1">
+    <input class="inp big" name="amount" type="text" inputmode="numeric" autocomplete="off" data-money placeholder="Rp 0" required>
     <label class="fld">Dari rekening <select class="inp" name="account"></select></label>
     <div class="modes">
       <label class="check"><input type="radio" name="mode" value="wallet" checked> Masuk dompet (belum dipakai)</label>
@@ -156,6 +156,6 @@
 </dialog>
 
 <div id="toast"></div>
-<script type="module" src="app.js?v=3"></script>
+<script type="module" src="app.js?v=4"></script>
 </body>
 </html>

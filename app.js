@@ -157,6 +157,10 @@ const memberName = (id) => S.members.find((m) => m.id === id)?.name || 'Pasangan
 const accName = (id) => S.accounts.find((a) => a.id === id)?.name || '—';
 const isMine = (a) => a.owner_id === myId();
 const isFamilyAcc = (a) => !a.owner_id;
+// angka dengan titik ribuan: 1000 -> 1.000
+const fmtNum = (v) => { const d = String(v ?? '').replace(/\D/g, '').replace(/^0+(?=\d)/, ''); return d ? d.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''; };
+const num = (v) => Number(String(v ?? '').replace(/\D/g, '')) || 0;
+const avInner = (p) => (p && p.avatar_url ? `<img src="${esc(p.avatar_url)}" alt="">` : esc(initial(p && p.name)));
 const initial = (s) => (String(s || '?').trim()[0] || '?').toUpperCase();
 
 function guess(text) {
@@ -244,7 +248,7 @@ async function refresh() {
     sb.from('accounts').select('*').order('created_at'),
     sb.from('transactions').select('*').order('txn_date', { ascending: false }).order('created_at', { ascending: false }),
     sb.from('rules').select('*'),
-    sb.from('profiles').select('id,name'),
+    sb.from('profiles').select('*'),
     sb.from('families').select('*').eq('id', famId()).single(),
     sb.from('budgets').select('*'),
   ]);
@@ -296,7 +300,8 @@ function render() {
     ? 'Catatan pribadi, hanya terlihat oleh Anda'
     : 'Mari kelola keuangan keluarga dengan bijak 💙';
   $('#month').value = S.month;
-  $('#btn-avatar').textContent = initial(S.profile.name);
+  $('#btn-avatar').innerHTML = avInner(S.profile);
+  $('#btn-avatar').classList.toggle('has-img', !!S.profile.avatar_url);
   $('#btn-theme').innerHTML = ic(isDark() ? 'sun' : 'moon');
 
   const badge = $('#badge');
@@ -532,7 +537,7 @@ function renderRekening() {
           <option value="wallet">E-Wallet</option>
           <option value="savings">Tabungan</option>
         </select>
-        <input class="inp" name="opening" type="number" inputmode="numeric" placeholder="Saldo awal (Rp)" value="0">
+        <input class="inp" name="opening" type="text" inputmode="numeric" autocomplete="off" data-money placeholder="Saldo awal (Rp)" value="0">
         <select class="inp" name="owner"><option value="me">Milik saya (pribadi)</option><option value="family">Milik keluarga (bersama)</option></select>
       </div>
       <div class="row-btn">
@@ -581,7 +586,7 @@ function renderAnggaran() {
         <h3>Atur anggaran bulanan</h3>
         <div class="form-grid">
           <select class="inp" name="category">${catOptions('expense', 'Belanja Bulanan')}</select>
-          <input class="inp" name="amount" type="number" inputmode="numeric" placeholder="Batas per bulan (Rp)" required min="1">
+          <input class="inp" name="amount" type="text" inputmode="numeric" autocomplete="off" data-money placeholder="Batas per bulan (Rp)" required>
         </div>
         <div class="row-btn"><span class="muted small">Dihitung dari transaksi yang dibagikan ke keluarga pada bulan terpilih.</span><button class="btn-primary">Simpan</button></div>
       </form>
@@ -639,8 +644,20 @@ function renderPengaturan() {
     </div>
     <div class="card pad">
       <div class="card-h"><h3>Anggota</h3></div>
-      ${S.members.map((m) => `<div class="acc-row"><span class="avatar sm">${esc(initial(m.name))}</span>
+      ${S.members.map((m) => `<div class="acc-row"><span class="avatar sm${m.avatar_url ? ' has-img' : ''}">${avInner(m)}</span>
         <div><b>${esc(m.name)}</b><small>${m.id === myId() ? 'Anda' : 'Pasangan'}</small></div></div>`).join('')}
+    </div>
+    <div class="card pad stack">
+      <h3>Foto profil</h3>
+      <div class="photo-row">
+        <button type="button" class="avatar big${S.profile.avatar_url ? ' has-img' : ''}" data-pick-photo aria-label="Ganti foto profil">${avInner(S.profile)}</button>
+        <div class="photo-act">
+          <button type="button" class="btn-ghost" data-pick-photo>${S.profile.avatar_url ? 'Ganti foto' : 'Pilih foto'}</button>
+          ${S.profile.avatar_url ? '<button type="button" class="btn-ghost btn-danger" data-del-photo>Hapus foto</button>' : ''}
+          <small class="muted">Foto dipakai di pojok kanan atas dan daftar anggota.</small>
+        </div>
+        <input type="file" id="photo-file" accept="image/*" hidden>
+      </div>
     </div>
     <div class="card pad stack">
       <h3>Tampilan</h3>
@@ -684,6 +701,7 @@ function setAddType(type) {
 async function saveTxn(f) {
   const account = S.accounts.find((a) => a.id === f.account.value);
   if (!account) return toast('Tambahkan rekening dulu di menu Rekening');
+  if (num(f.amount.value) < 1) return toast('Isi jumlah uangnya dulu');
   const type = f.dataset.type || 'expense';
   const desc = f.desc.value.trim();
   const category = f.category.value;
@@ -691,7 +709,7 @@ async function saveTxn(f) {
 
   const { error } = await sb.from('transactions').insert({
     family_id: famId(), owner_id: myId(), account_id: account.id,
-    type, amount: Number(f.amount.value),
+    type, amount: num(f.amount.value),
     description: desc, category,
     visibility: isFamilyAcc(account) || f.shared.checked ? 'shared' : 'private',
     status: 'ok', txn_date: today(), source: 'manual',
@@ -707,7 +725,7 @@ function openWithdraw(pendingId) {
   const pending = pendingId ? S.txns.find((t) => t.id === pendingId) : null;
   f.reset();
   f.pendingId.value = pending?.id || '';
-  f.amount.value = pending ? pending.amount : '';
+  f.amount.value = pending ? fmtNum(pending.amount) : '';
   f.account.innerHTML = accountOptions((a) => a.kind !== 'cash' && (isMine(a) || isFamilyAcc(a)), pending?.account_id);
   const cash = S.accounts.filter((a) => a.kind === 'cash' && (isMine(a) || isFamilyAcc(a)));
   f.cash.innerHTML = cash.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join('')
@@ -730,7 +748,8 @@ async function saveWithdraw(f) {
     : { to_account_id: null, category: f.category.value, description: desc || 'Tarik tunai' };
   if (mode === 'spend' && desc) await learnRule(desc, f.category.value);
 
-  const payload = { ...fields, type: 'withdrawal', account_id: account.id, amount: Number(f.amount.value), status: 'ok' };
+  if (num(f.amount.value) < 1) return toast('Isi jumlah uangnya dulu');
+  const payload = { ...fields, type: 'withdrawal', account_id: account.id, amount: num(f.amount.value), status: 'ok' };
   const { error } = f.pendingId.value
     ? await sb.from('transactions').update(payload).eq('id', f.pendingId.value)
     : await sb.from('transactions').insert({
@@ -783,16 +802,40 @@ async function saveAccount(f) {
     owner_id: fd.get('owner') === 'me' ? myId() : null,
     name: String(fd.get('name')).trim(),
     kind: fd.get('kind'),
-    opening_balance: Number(fd.get('opening')) || 0,
+    opening_balance: num(fd.get('opening')),
   });
   if (error) return toast(error.message);
   toast('Rekening ditambahkan');
   await refresh();
 }
 
+// kecilkan foto jadi 256px (kotak) supaya ringan disimpan
+function resizePhoto(file) {
+  return new Promise((ok, no) => {
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => {
+      const s = Math.min(img.width, img.height), sz = 256;
+      const cv = document.createElement('canvas'); cv.width = cv.height = sz;
+      cv.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, sz, sz);
+      URL.revokeObjectURL(url); ok(cv.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); no(new Error('Foto tidak bisa dibaca')); };
+    img.src = url;
+  });
+}
+async function savePhoto(dataUrl) {
+  const { error } = await sb.from('profiles').update({ avatar_url: dataUrl }).eq('id', myId());
+  if (error) return toast(/avatar_url|column|schema/i.test(error.message)
+    ? 'Fitur foto belum diaktifkan. Jalankan update-foto.sql di Supabase dulu.' : error.message);
+  S.profile.avatar_url = dataUrl;
+  toast(dataUrl ? 'Foto disimpan' : 'Foto dihapus');
+  await refresh();
+}
+
 async function saveBudget(f) {
+  if (num(f.amount.value) < 1) return toast('Isi batas anggarannya dulu');
   const { error } = await sb.from('budgets').upsert(
-    { family_id: famId(), category: f.category.value, amount: Number(f.amount.value) },
+    { family_id: famId(), category: f.category.value, amount: num(f.amount.value) },
     { onConflict: 'family_id,category' });
   if (error) return toast(error.message);
   toast('Anggaran disimpan');
@@ -857,6 +900,8 @@ document.addEventListener('click', async (e) => {
     const p = S.txns.find((x) => x.status === 'pending' && x.owner_id === myId());
     return p ? openWithdraw(p.id) : toast('Tidak ada pengingat baru');
   }
+  if (t.closest('[data-pick-photo]')) { const fi = $('#photo-file'); if (fi) fi.click(); return; }
+  if (t.closest('[data-del-photo]')) return savePhoto(null);
   if (t.closest('#btn-avatar')) { S.view = 'pengaturan'; return render(); }
   const tm = t.closest('[data-theme-mode]');
   if (tm) return setMode(tm.dataset.themeMode);
@@ -868,6 +913,12 @@ document.addEventListener('click', async (e) => {
     const { error } = await sb.auth.signUp({ email: f.email.value, password: f.password.value });
     toast(error ? error.message : 'Akun dibuat. Silakan tekan Masuk.');
   }
+});
+
+document.addEventListener('change', async (e) => {
+  if (e.target.id !== 'photo-file') return;
+  const file = e.target.files && e.target.files[0]; if (!file) return;
+  try { await savePhoto(await resizePhoto(file)); } catch (err) { toast(err.message); }
 });
 
 document.addEventListener('submit', async (e) => {
@@ -895,6 +946,14 @@ document.addEventListener('submit', async (e) => {
 
 document.addEventListener('input', (e) => {
   const t = e.target;
+  if (t.matches && t.matches('[data-money]')) {
+    const before = t.value, pos = t.selectionStart;
+    const digitsLeft = before.slice(0, pos).replace(/\D/g, '').length;
+    t.value = fmtNum(before);
+    let p = 0, seen = 0;
+    while (p < t.value.length && seen < digitsLeft) { if (/\d/.test(t.value[p])) seen++; p++; }
+    try { t.setSelectionRange(p, p); } catch {}
+  }
   if (t.id === 'f-q') { S.f.q = t.value; S.page = 1; updateTxnArea(); }
   // kategori otomatis saat mengetik keterangan
   if (t.name === 'desc' && t.closest('#form-add')) {

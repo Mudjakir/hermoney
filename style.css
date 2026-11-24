@@ -210,8 +210,8 @@ dialog form{display:flex;flex-direction:column;gap:14px}
 
 /* ===== Tema kaca (glass) ===== */
 :root{
-  --glass:rgba(255,255,255,.58);
-  --glass2:rgba(255,255,255,.72);
+  --glass:rgba(255,255,255,.44);
+  --glass2:rgba(255,255,255,.54);
   --edge:rgba(255,255,255,.95);
   --gshadow:0 14px 36px rgba(46,92,200,.10),inset 0 1px 0 rgba(255,255,255,.95);
 }
@@ -227,7 +227,7 @@ body::after{content:"";position:fixed;z-index:-1;pointer-events:none;left:-14vw;
 
 /* wadah besar seperti jendela kaca */
 .app{width:calc(100% - 44px);max-width:1400px;margin:22px auto;min-height:calc(100vh - 44px);border-radius:34px;
-  background:rgba(255,255,255,.46);border:1px solid var(--edge);
+  background:rgba(255,255,255,.36);border:1px solid var(--edge);
   box-shadow:0 30px 80px rgba(46,92,200,.16),inset 0 1px 0 #fff}
 .sidebar{position:sticky;top:22px;height:calc(100vh - 44px);align-self:flex-start;width:246px;overflow:hidden;
   border-radius:34px 0 0 34px;border-right:1px solid rgba(255,255,255,.8);
@@ -248,15 +248,15 @@ body::after{content:"";position:fixed;z-index:-1;pointer-events:none;left:-14vw;
 /* kartu dan kontrol berbahan kaca */
 .card{background:var(--glass2);border:1px solid var(--edge);border-radius:26px;
   -webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);box-shadow:var(--gshadow)}
-.sc.hero-c{background:linear-gradient(120deg,rgba(232,242,255,.88),rgba(168,199,255,.82))}
+.sc.hero-c{background:linear-gradient(120deg,rgba(232,242,255,.66),rgba(168,199,255,.62))}
 .circ{box-shadow:0 8px 18px rgba(46,92,200,.16),inset 0 1px 0 rgba(255,255,255,.95)}
 .in-c{background:radial-gradient(circle at 32% 24%,#f4f8ff,#c4daff);color:#2563eb}
 .out-c{background:radial-gradient(circle at 32% 24%,#fff5f5,#ffcfd3);color:#ef4444}
 .white-c{background:radial-gradient(circle at 32% 24%,#ffffff,#d3e4ff);color:#2563eb}
 .sc .circ .ic{width:32px;height:32px}
 .sc.hero-c .circ .ic{width:42px;height:42px;stroke-width:1.9}
-.inp{background:rgba(255,255,255,.85);border:1px solid #d3e0f7}
-.search,.pill-select,.bell{background:rgba(255,255,255,.74);border:1px solid var(--edge);
+.inp{background:rgba(255,255,255,.64);border:1px solid #d3e0f7}
+.search,.pill-select,.bell{background:rgba(255,255,255,.56);border:1px solid var(--edge);
   -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
   box-shadow:0 8px 20px rgba(46,92,200,.08),inset 0 1px 0 #fff}
 .avatar{border:2px solid rgba(255,255,255,.95);box-shadow:0 8px 20px rgba(37,99,235,.28)}
@@ -274,7 +274,7 @@ body::after{content:"";position:fixed;z-index:-1;pointer-events:none;left:-14vw;
 .seg{background:rgba(226,237,255,.7)}
 .btn-ghost{background:rgba(255,255,255,.8);border:1px solid var(--edge);box-shadow:0 6px 16px rgba(46,92,200,.08)}
 .banner{background:rgba(255,247,224,.85);border:1px solid rgba(255,255,255,.9)}
-dialog{background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);border:1px solid var(--edge)}
+dialog{background:rgba(255,255,255,.70);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);border:1px solid var(--edge)}
 
 @media (max-width:1100px) and (min-width:861px){
   .sum-d{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
@@ -386,7 +386,7 @@ dialog{background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(22px);backdr
 
   .tabbar{
     display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:30;
-    background:rgba(255,255,255,.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    background:rgba(255,255,255,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(12px);
     border-radius:26px 26px 0 0;box-shadow:0 -8px 30px rgba(37,99,235,.14);
     padding:8px 8px calc(8px + env(safe-area-inset-bottom));
   }
@@ -404,7 +404,7 @@ dialog{background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(22px);backdr
   .hero::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 95% at 100% 0%,rgba(255,255,255,.30),transparent 58%)}
   .hero-ic{top:50%;transform:translateY(-50%);right:16px;opacity:.92}
   .hero-ic .ic{width:62px;height:62px;stroke-width:1.7}
-  .tabbar{background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--edge);border-bottom:0}
+  .tabbar{background:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--edge);border-bottom:0}
 }
 
 @media (max-width:350px){
@@ -429,7 +429,7 @@ html[data-theme="dark"]{
   --blue:#7fb0ff;--blue2:#5b9bff;--soft:rgba(110,160,255,.20);--ink:#e9eeff;--mut:#9aa9cc;--line:rgba(255,255,255,.08);
   --green:#4ade80;--red:#f87171;--amber:#fbbf24;
   --shadow:0 10px 32px rgba(0,0,0,.35);
-  --glass:rgba(24,34,66,.55);--glass2:rgba(26,37,72,.62);--edge:rgba(255,255,255,.09);
+  --glass:rgba(24,34,66,.41);--glass2:rgba(26,37,72,.47);--edge:rgba(255,255,255,.09);
   --gshadow:0 16px 40px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.06);
 }
 html[data-theme="dark"] body{background:linear-gradient(160deg,#0a1124 0%,#0c1a38 100%) fixed}
@@ -439,7 +439,7 @@ html[data-theme="dark"] body::before{background:
   radial-gradient(30vw 30vw at 82% 4%,rgba(88,70,200,.22),transparent 70%),
   radial-gradient(26vw 26vw at 2% 94%,rgba(30,120,220,.26),transparent 70%)}
 html[data-theme="dark"] body::after{background:linear-gradient(135deg,rgba(120,160,255,.10),rgba(255,255,255,0) 70%)}
-html[data-theme="dark"] .app{background:rgba(14,22,46,.50);box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06)}
+html[data-theme="dark"] .app{background:rgba(14,22,46,.38);box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06)}
 html[data-theme="dark"] .sidebar{background:linear-gradient(180deg,rgba(22,32,64,.80),rgba(14,24,54,.70));border-right:1px solid rgba(255,255,255,.06)}
 html[data-theme="dark"] .sidebar::before{background:
   radial-gradient(ellipse at 28% 100%,rgba(60,120,240,.40),transparent 62%),
@@ -450,7 +450,7 @@ html[data-theme="dark"] .nav.active{background:linear-gradient(135deg,rgba(96,15
 html[data-theme="dark"] .scope-b{background:rgba(255,255,255,.06);color:#b4c2e6;border-color:rgba(255,255,255,.09);box-shadow:none}
 html[data-theme="dark"] .scope-b.on{background:linear-gradient(135deg,rgba(96,150,255,.34),rgba(96,150,255,.20));color:#b5d2ff}
 html[data-theme="dark"] .badge{border-color:#131c38}
-html[data-theme="dark"] .sc.hero-c{background:linear-gradient(120deg,rgba(54,96,200,.55),rgba(38,66,150,.50))}
+html[data-theme="dark"] .sc.hero-c{background:linear-gradient(120deg,rgba(54,96,200,.42),rgba(38,66,150,.38))}
 html[data-theme="dark"] .sc small,html[data-theme="dark"] .mc small{color:#aab8da}
 html[data-theme="dark"] .circ{box-shadow:0 8px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12)}
 html[data-theme="dark"] .in-c{background:radial-gradient(circle at 32% 24%,#2c4a8c,#1b3166);color:#8ab6ff}
@@ -484,9 +484,19 @@ html[data-theme="dark"] .bar{background:rgba(255,255,255,.08)}
 html[data-theme="dark"] .banner,html[data-theme="dark"] .notice{background:rgba(251,191,36,.12);color:#fcd34d;border-color:rgba(251,191,36,.22)}
 html[data-theme="dark"] .code,html[data-theme="dark"] .bulk{background:var(--soft);color:#a9c9ff}
 html[data-theme="dark"] .ic-blue{background:rgba(110,160,255,.18);color:#8ab6ff}
-html[data-theme="dark"] dialog{background:rgba(20,29,58,.95);border-color:rgba(255,255,255,.10);box-shadow:0 30px 80px rgba(0,0,0,.6)}
+html[data-theme="dark"] dialog{background:rgba(20,29,58,.74);border-color:rgba(255,255,255,.10);box-shadow:0 30px 80px rgba(0,0,0,.6)}
 html[data-theme="dark"] dialog::backdrop{background:rgba(3,7,18,.62)}
 html[data-theme="dark"] #toast{background:#e9eeff;color:#0b1226}
-html[data-theme="dark"] .tabbar{background:rgba(14,22,46,.88);border-color:rgba(255,255,255,.08);box-shadow:0 -8px 30px rgba(0,0,0,.4)}
+html[data-theme="dark"] .tabbar{background:rgba(14,22,46,.66);border-color:rgba(255,255,255,.08);box-shadow:0 -8px 30px rgba(0,0,0,.4)}
 html[data-theme="dark"] .tab{color:#8c9cc2}
 html[data-theme="dark"] .tab.active{color:#8fbaff}
+
+/* foto profil */
+.avatar{overflow:hidden;padding:0}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar.has-img{background:#dfe9fb}
+.avatar.big{width:84px;height:84px;font-size:32px;cursor:pointer;flex:none}
+.photo-row{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.photo-act{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0;flex:1}
+.photo-act small{max-width:260px;line-height:1.35}
+@media (max-width:860px){.photo-act .btn-ghost{width:auto}}
