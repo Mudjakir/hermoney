@@ -34,7 +34,18 @@ const CAT = {
   'Lainnya': ['tag', '#475569', '#e6ebf2'],
   'Tarik tunai': ['cash', '#475569', '#e6ebf2'],
 };
-const catStyle = (c) => CAT[c] || CAT['Lainnya'];
+const CAT_DARK_FG = {
+  '#2563eb': '#7fb0ff', '#16a34a': '#4ade80', '#ea580c': '#fb923c', '#7c3aed': '#a78bfa', '#ca8a04': '#facc15',
+  '#0891b2': '#22d3ee', '#db2777': '#f472b6', '#4f46e5': '#818cf8', '#c026d3': '#e879f9', '#475569': '#a8b5cc',
+};
+const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; };
+const isDark = () => document.documentElement.dataset.theme === 'dark';
+const catStyle = (c) => {
+  const [i, fg, bg] = CAT[c] || CAT['Lainnya'];
+  if (!isDark()) return [i, fg, bg];
+  const f = CAT_DARK_FG[fg] || fg;
+  return [i, f, rgba(f, 0.18)];
+};
 
 const NAV = [
   ['dashboard', 'Dashboard', 'home'],
@@ -87,6 +98,8 @@ const P = {
   chev: '<polyline points="6 9 12 15 18 9"/>',
   chevL: '<polyline points="15 18 9 12 15 6"/>',
   chevR: '<polyline points="9 18 15 12 9 6"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
 };
 const ic = (n, c = '') =>
   `<svg class="ic ${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n] || ''}</svg>`;
@@ -103,6 +116,27 @@ const S = {
   f: { q: '', range: 'month', cat: '', acc: '', kind: '' },
   hide: loadHide(),
 };
+
+// ================= Tema (terang / gelap / otomatis) =================
+const THEME_KEY = 'hm_theme';
+const getMode = () => { try { return localStorage.getItem(THEME_KEY) || 'auto'; } catch { return 'auto'; } };
+const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+const resolveTheme = (m = getMode()) => (m === 'auto' ? (mq && mq.matches ? 'dark' : 'light') : m);
+function applyTheme() {
+  const th = resolveTheme();
+  document.documentElement.dataset.theme = th;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', th === 'dark' ? '#0b1226' : '#2f6df6');
+}
+function setMode(m) {
+  try { localStorage.setItem(THEME_KEY, m); } catch { /* abaikan */ }
+  applyTheme();
+  if (S.profile) render();
+}
+if (mq) {
+  const onChange = () => { if (getMode() === 'auto') { applyTheme(); if (S.profile) render(); } };
+  if (mq.addEventListener) mq.addEventListener('change', onChange); else if (mq.addListener) mq.addListener(onChange);
+}
 
 // ================= Helper =================
 const $ = (s) => document.querySelector(s);
@@ -263,6 +297,7 @@ function render() {
     : 'Mari kelola keuangan keluarga dengan bijak 💙';
   $('#month').value = S.month;
   $('#btn-avatar').textContent = initial(S.profile.name);
+  $('#btn-theme').innerHTML = ic(isDark() ? 'sun' : 'moon');
 
   const badge = $('#badge');
   badge.classList.toggle('hidden', !pend.length);
@@ -323,7 +358,7 @@ function miItem(t) {
 
 function accRow(a, bal) {
   return `<div class="acc-row">
-    <span class="mi-ic" style="background:#e4eeff;color:#2563eb">${ic(KIND_IC[a.kind])}</span>
+    <span class="mi-ic ic-blue">${ic(KIND_IC[a.kind])}</span>
     <div><b>${esc(a.name)}</b><small>${KIND[a.kind]} · ${a.owner_id ? esc(memberName(a.owner_id)) : 'Keluarga'}</small></div>
     <span class="bal">${money(bal[a.id] || 0)}</span>
   </div>`;
@@ -507,7 +542,7 @@ function renderRekening() {
     </form>
     <div class="acc-grid">${S.accounts.map((a) => `
       <div class="card acc-card">
-        <div class="top2"><span class="mi-ic" style="background:#e4eeff;color:#2563eb">${ic(KIND_IC[a.kind])}</span>
+        <div class="top2"><span class="mi-ic ic-blue">${ic(KIND_IC[a.kind])}</span>
           <div><b>${esc(a.name)}</b><br><small class="muted">${KIND[a.kind]} · ${a.owner_id ? esc(memberName(a.owner_id)) : 'Keluarga'}</small></div></div>
         <b class="big">${money(bal[a.id] || 0)}</b>
       </div>`).join('') || '<p class="muted">Belum ada rekening.</p>'}
@@ -606,6 +641,14 @@ function renderPengaturan() {
       <div class="card-h"><h3>Anggota</h3></div>
       ${S.members.map((m) => `<div class="acc-row"><span class="avatar sm">${esc(initial(m.name))}</span>
         <div><b>${esc(m.name)}</b><small>${m.id === myId() ? 'Anda' : 'Pasangan'}</small></div></div>`).join('')}
+    </div>
+    <div class="card pad stack">
+      <h3>Tampilan</h3>
+      <div class="seg">
+        ${[['auto', 'Otomatis'], ['light', 'Terang'], ['dark', 'Gelap']].map(([m, l]) =>
+          `<button type="button" class="${getMode() === m ? 'on' : ''}" data-theme-mode="${m}">${l}</button>`).join('')}
+      </div>
+      <div class="muted small">Otomatis mengikuti pengaturan terang atau gelap di HP atau laptop Anda.</div>
     </div>
     <div class="card pad stack">
       <h3>Akun</h3>
@@ -815,6 +858,9 @@ document.addEventListener('click', async (e) => {
     return p ? openWithdraw(p.id) : toast('Tidak ada pengingat baru');
   }
   if (t.closest('#btn-avatar')) { S.view = 'pengaturan'; return render(); }
+  const tm = t.closest('[data-theme-mode]');
+  if (tm) return setMode(tm.dataset.themeMode);
+  if (t.closest('#btn-theme')) return setMode(isDark() ? 'light' : 'dark');
   if (t.closest('#btn-logout')) return sb.auth.signOut();
   if (t.closest('#btn-signup')) {
     const f = $('#form-login');
@@ -886,6 +932,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && S.
 
 // ================= Mulai =================
 document.querySelectorAll('[data-i]').forEach((el) => { el.innerHTML = ic(el.dataset.i); });
+applyTheme();
 fillMonths();
 sb.auth.onAuthStateChange((evt, session) => {
   if (evt === 'TOKEN_REFRESHED') return;
