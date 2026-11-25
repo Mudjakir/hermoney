@@ -309,7 +309,7 @@ function render() {
   badge.textContent = pend.length;
 
   $('#banner').innerHTML = pend.length
-    ? `<div class="banner"><span>Ada ${pend.length} tarik tunai menunggu dicatat. Untuk apa uangnya?</span><button class="pill" data-classify="${pend[0].id}">Catat sekarang</button></div>`
+    ? `<div class="banner"><span class="bn-t"><span class="bn-ic">${ic('wallet')}</span><span>Ada ${pend.length} tarik tunai menunggu dicatat. Untuk apa uangnya?</span></span><button class="pill bn-btn" data-classify="${pend[0].id}">Catat sekarang</button></div>`
     : '';
 
   ({
@@ -432,6 +432,7 @@ function renderTransaksi() {
         <label class="pill-select">${ic('sliders')}<select id="f-kind">${opts(KINDF, f.kind)}</select>${ic('chev')}</label>
       </div>
     </div>
+    <div id="f-sum"></div>
     <div class="card tbl-wrap" id="txn-area"></div>
   </div>`;
   updateTxnArea();
@@ -473,7 +474,28 @@ function pagerHtml(total, pages, start) {
   </div>`;
 }
 
+function updateFilterSummary() {
+  const el = $('#f-sum'); if (!el) return;
+  const f = S.f;
+  const period = f.range === 'month' ? (() => { const [y, m] = S.month.split('-'); return `${BULAN[m - 1]} ${y}`; })()
+    : (RANGE.find((r) => r[0] === f.range) || [, ''])[1];
+  const chips = [];
+  if (f.q.trim()) chips.push(['q', `Cari: “${f.q.trim()}”`]);
+  if (f.cat) chips.push(['cat', `Kategori: ${f.cat}`]);
+  if (f.acc) chips.push(['acc', `Rekening: ${accName(f.acc)}`]);
+  if (f.kind) chips.push(['kind', (KINDF.find((k) => k[0] === f.kind) || [, ''])[1]]);
+  if (f.range !== 'month') chips.push(['range', null]);
+  el.innerHTML = `<div class="fsum"><span class="fsum-p">${ic('calendar')}${esc(period)}</span>`
+    + chips.filter((x) => x[1]).map(([k, l]) => `<button type="button" class="fchip" data-clearf="${k}">${esc(l)} <b>✕</b></button>`).join('')
+    + (chips.length > (f.range !== 'month' ? 1 : 0) || f.range !== 'month' ? '<button type="button" class="fchip reset" data-clearf="all">Hapus semua filter</button>' : '')
+    + '</div>';
+  [['f-range', f.range !== 'month'], ['f-cat', !!f.cat], ['f-acc', !!f.acc], ['f-kind', !!f.kind]].forEach(([id, on]) => {
+    const s = document.getElementById(id); if (s && s.parentElement) s.parentElement.classList.toggle('active', on);
+  });
+}
+
 function updateTxnArea() {
+  updateFilterSummary();
   const el = $('#txn-area'); if (!el) return;
   const all = filteredTxns();
   const pages = Math.max(1, Math.ceil(all.length / PAGE));
@@ -639,7 +661,8 @@ function renderPengaturan() {
       <div>Nama keluarga: <b>${esc(S.family?.name)}</b></div>
       <div class="row-btn">
         <span>Kode undangan untuk pasangan: <span class="code">${esc(S.family?.invite_code)}</span></span>
-        <button class="btn-ghost" data-copy="${esc(S.family?.invite_code)}">Salin kode</button>
+        <span class="row-btn"><button class="btn-ghost" data-copy="${esc(S.family?.invite_code)}">Salin kode</button>
+        <button class="btn-primary" data-share-invite>Bagikan undangan</button></span>
       </div>
     </div>
     <div class="card pad">
@@ -666,6 +689,18 @@ function renderPengaturan() {
           `<button type="button" class="${getMode() === m ? 'on' : ''}" data-theme-mode="${m}">${l}</button>`).join('')}
       </div>
       <div class="muted small">Otomatis mengikuti pengaturan terang atau gelap di HP atau laptop Anda.</div>
+    </div>
+    <div class="card pad stack">
+      <h3>Cadangan data</h3>
+      <div class="muted small">Unduh salinan catatan keuangan Anda. Berkas CSV bisa dibuka di Excel atau Google Sheets. Cadangan lengkap (JSON) disimpan sebagai arsip.</div>
+      <div class="row-btn start">
+        <button class="btn-ghost" data-export="csv">Unduh Excel (CSV)</button>
+        <button class="btn-ghost" data-export="json">Unduh cadangan lengkap</button>
+      </div>
+    </div>
+    <div class="card pad stack">
+      <h3>Catatan penting</h3>
+      <div class="muted small">Database gratis akan tidur jika tidak dipakai sekitar 7 hari. Cukup buka aplikasi ini lalu tunggu beberapa menit, data Anda tetap aman. Sebaiknya unduh cadangan sebulan sekali.</div>
     </div>
     <div class="card pad stack">
       <h3>Akun</h3>
@@ -842,11 +877,59 @@ async function saveBudget(f) {
   await refresh();
 }
 
+// ----- Bagikan undangan & cadangan data -----
+async function shareInvite() {
+  const url = location.origin + location.pathname.replace(/index\.html$/, '');
+  const text = `Yuk catat keuangan keluarga bareng di HerMoney 💙\n\n1. Buka: ${url}\n2. Daftar akun, pilih "Gabung keluarga"\n3. Masukkan kode undangan: ${S.family?.invite_code}`;
+  if (navigator.share) { try { await navigator.share({ title: 'HerMoney', text }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+}
+
+function downloadFile(name, mime, content) {
+  const blob = new Blob([content], { type: mime });
+  const u = URL.createObjectURL(blob);
+  const l = document.createElement('a'); l.href = u; l.download = name;
+  document.body.appendChild(l); l.click(); l.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 2000);
+}
+
+function exportData(kind) {
+  const stamp = today();
+  if (kind === 'json') {
+    const mine = (x) => x.owner_id === null || x.owner_id === undefined || x.owner_id === myId();
+    const data = { aplikasi: 'HerMoney', diekspor: new Date().toISOString(), keluarga: S.family?.name,
+      rekening: S.accounts.filter(mine), transaksi: S.txns, anggaran: S.budgets };
+    downloadFile(`hermoney-cadangan-${stamp}.json`, 'application/json', JSON.stringify(data, null, 2));
+  } else {
+    const TY = { income: 'Pemasukan', expense: 'Pengeluaran', transfer: 'Transfer', withdrawal: 'Tarik tunai' };
+    const q = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+    const head = ['Tanggal', 'Jenis', 'Jumlah', 'Keterangan', 'Kategori', 'Rekening', 'Ke rekening', 'Status', 'Dibagikan', 'Pencatat', 'Sumber'];
+    const rows = S.txns.map((t) => [t.txn_date, TY[t.type] || t.type, t.amount, t.description, t.category || '',
+      accName(t.account_id), t.to_account_id ? accName(t.to_account_id) : '', t.status === 'pending' ? 'Belum dicatat' : 'Selesai',
+      t.visibility === 'shared' ? 'Keluarga' : 'Pribadi', memberName(t.owner_id), t.source === 'email' ? 'Email' : 'Manual']);
+    const csv = '\uFEFF' + [head, ...rows].map((r) => r.map(q).join(';')).join('\r\n');
+    downloadFile(`hermoney-transaksi-${stamp}.csv`, 'text/csv;charset=utf-8', csv);
+  }
+  toast('Berkas diunduh');
+}
+
 async function deleteTxns(ids) {
   const { error } = await sb.from('transactions').delete().in('id', ids);
   if (error) return toast(error.message);
   toast('Dihapus');
   await refresh();
+}
+
+// dialog konfirmasi bergaya aplikasi (pengganti confirm bawaan browser)
+function askConfirm(msg, okLabel = 'Hapus', title = 'Yakin?') {
+  return new Promise((res) => {
+    const d = $('#dlg-confirm'); let yes = false;
+    $('#cf-title').textContent = title; $('#cf-msg').textContent = msg; $('#cf-ok').textContent = okLabel;
+    const done = () => { d.removeEventListener('close', done); res(yes); };
+    d.addEventListener('close', done);
+    $('#cf-ok').onclick = () => { yes = true; d.close(); };
+    d.showModal();
+  });
 }
 
 // ================= Event =================
@@ -871,19 +954,29 @@ document.addEventListener('click', async (e) => {
     return render();
   }
   if (t.closest('[data-bulkdel]')) {
-    if (!confirm(`Hapus ${S.sel.size} transaksi terpilih?`)) return;
+    if (!(await askConfirm(`${S.sel.size} transaksi terpilih akan dihapus permanen.`, 'Hapus', 'Hapus transaksi?'))) return;
     return deleteTxns([...S.sel]);
+  }
+  const cf = t.closest('[data-clearf]');
+  if (cf) {
+    const k = cf.dataset.clearf;
+    const dflt = { q: '', range: 'month', cat: '', acc: '', kind: '' };
+    if (k === 'all') Object.assign(S.f, dflt); else S.f[k] = dflt[k];
+    S.page = 1;
+    const set = (id, v) => { const x = document.getElementById(id); if (x) x.value = v; };
+    set('f-q', S.f.q); set('f-range', S.f.range); set('f-cat', S.f.cat); set('f-acc', S.f.acc); set('f-kind', S.f.kind);
+    return updateTxnArea();
   }
   if (t.closest('[data-clearsel]')) { S.sel.clear(); return updateTxnArea(); }
   if (t.closest('[data-del-edit]')) {
-    if (!confirm('Hapus transaksi ini?')) return;
+    if (!(await askConfirm('Transaksi ini akan dihapus permanen dan tidak bisa dikembalikan.', 'Hapus', 'Hapus transaksi?'))) return;
     const id = $('#form-edit').txnId.value;
     $('#dlg-edit').close();
     return deleteTxns([id]);
   }
   const db = t.closest('[data-delbudget]');
   if (db) {
-    if (!confirm('Hapus anggaran kategori ini?')) return;
+    if (!(await askConfirm('Batas anggaran kategori ini akan dihapus.', 'Hapus', 'Hapus anggaran?'))) return;
     const { error } = await sb.from('budgets').delete().eq('id', db.dataset.delbudget);
     if (error) return toast(error.message);
     return refresh();
@@ -900,6 +993,9 @@ document.addEventListener('click', async (e) => {
     const p = S.txns.find((x) => x.status === 'pending' && x.owner_id === myId());
     return p ? openWithdraw(p.id) : toast('Tidak ada pengingat baru');
   }
+  if (t.closest('[data-share-invite]')) return shareInvite();
+  const ex = t.closest('[data-export]');
+  if (ex) return exportData(ex.dataset.export);
   if (t.closest('[data-pick-photo]')) { const fi = $('#photo-file'); if (fi) fi.click(); return; }
   if (t.closest('[data-del-photo]')) return savePhoto(null);
   if (t.closest('#btn-avatar')) { S.view = 'pengaturan'; return render(); }

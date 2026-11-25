@@ -15,7 +15,7 @@
 <script>
 (function(){try{var m=localStorage.getItem('hm_theme')||'auto';var d=m==='dark'||(m==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();
 </script>
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -99,7 +99,7 @@
     <label class="fld">Rekening
       <select class="inp" name="account"></select>
     </label>
-    <label class="check"><input type="checkbox" name="shared" checked> Bagikan ke keluarga</label>
+    <label class="check"><input type="checkbox" name="shared"> Bagikan ke keluarga <small class="muted">(kosong = pribadi)</small></label>
     <div class="row-btn end">
       <button type="button" class="btn-ghost" data-close>Batal</button>
       <button class="btn-primary">Simpan</button>
@@ -155,7 +155,17 @@
   </form>
 </dialog>
 
+<dialog id="dlg-confirm">
+  <div class="stack">
+    <h3 id="cf-title">Yakin?</h3>
+    <p id="cf-msg" class="muted" style="margin:0"></p>
+    <div class="row-btn end">
+      <button type="button" class="btn-ghost" data-close>Batal</button>
+      <button type="button" class="btn-danger solid" id="cf-ok">Hapus</button>
+    </div>
+  </div>
+</dialog>
 <div id="toast"></div>
-<script type="module" src="app.js?v=4"></script>
+<script type="module" src="app.js?v=6"></script>
 </body>
 </html>
