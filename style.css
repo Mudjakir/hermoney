@@ -590,3 +590,11 @@ html[data-theme="dark"] .mode-card{background:rgba(255,255,255,.05)}
   html[data-theme="dark"] .tabbar{background:rgba(16,24,50,.82);border-color:rgba(255,255,255,.10);box-shadow:0 14px 34px rgba(0,0,0,.5)}
   html[data-theme="dark"] .tab.active{background:rgba(110,160,255,.16)}
 }
+
+/* pintasan di Pengaturan */
+.set-link{display:flex;align-items:center;gap:14px;width:100%;padding:12px 2px;text-align:left;border-bottom:1px solid var(--line);color:inherit}
+.set-link:last-child{border-bottom:0}
+.set-link .sl-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.set-link .sl-t b{font-weight:700}
+.set-link .sl-t small{color:var(--mut);font-size:13px}
+.set-link > .ic{width:18px;height:18px;color:var(--mut);flex:none}

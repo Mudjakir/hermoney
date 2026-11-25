@@ -173,9 +173,12 @@ function guess(text) {
 function catOptions(type, selected) {
   return (type === 'income' ? CAT_IN : CAT_OUT).map((c) => `<option ${c === selected ? 'selected' : ''}>${c}</option>`).join('');
 }
+// siapa pemilik rekening: Keluarga / Pribadi / nama pasangan
+const ownerTag = (a) => (isFamilyAcc(a) ? 'Keluarga' : isMine(a) ? 'Pribadi' : memberName(a.owner_id));
+
 function accountOptions(filter = () => true, selected) {
   return S.accounts.filter(filter).map((a) =>
-    `<option value="${a.id}" ${a.id === selected ? 'selected' : ''}>${esc(a.name)} (${KIND[a.kind]})</option>`).join('');
+    `<option value="${a.id}" ${a.id === selected ? 'selected' : ''}>${esc(a.name)} (${KIND[a.kind]}) · ${esc(ownerTag(a))}</option>`).join('');
 }
 
 function balances() {
@@ -293,6 +296,9 @@ function render() {
     `<button class="tab ${S.view === v ? 'active' : ''}" data-view="${v}">${ic(i)}<span>${l}</span></button>`).join('');
   $('#scope').innerHTML = scopeHtml();
   $('#m-scope').innerHTML = scopeHtml();
+  const noScope = S.view === 'pengaturan';   // Pengaturan bukan halaman "hasil"
+  $('#scope').classList.toggle('hidden', noScope);
+  $('#m-scope').classList.toggle('hidden', noScope);
 
   const h = new Date().getHours();
   const sapa = h < 11 ? 'pagi' : h < 15 ? 'siang' : h < 18 ? 'sore' : 'malam';
@@ -398,7 +404,7 @@ function renderDashboard() {
     ${summary()}
     <div class="two">
       <div class="card pad">
-        <div class="card-h"><h3>Rekening &amp; Tabungan</h3><button class="link" data-view="rekening">Kelola</button></div>
+        <div class="card-h"><h3>Rekening &amp; Tabungan</h3></div>
         ${accs.length ? accs.map((a) => accRow(a, bal)).join('')
           : '<p class="muted">Belum ada rekening untuk tampilan ini. Tambahkan di menu Rekening.</p>'}
       </div>
@@ -423,7 +429,7 @@ const opts = (arr, sel) => arr.map(([v, l]) => `<option value="${esc(v)}" ${v ==
 function renderTransaksi() {
   const f = S.f;
   const cats = [['', 'Kategori'], ...[...CAT_OUT, ...CAT_IN, 'Tarik tunai'].map((c) => [c, c])];
-  const accs = [['', 'Rekening'], ...S.accounts.filter((a) => isMine(a) || isFamilyAcc(a)).map((a) => [a.id, a.name])];
+  const accs = [['', 'Rekening'], ...S.accounts.filter((a) => isMine(a) || isFamilyAcc(a)).map((a) => [a.id, `${a.name} · ${ownerTag(a)}`])];
   $('#page').innerHTML = `<div class="page">
     ${head('Transaksi', 'sliders', true)}
     ${summary()}
@@ -668,6 +674,11 @@ function renderPengaturan() {
         <span class="row-btn"><button class="btn-ghost" data-copy="${esc(S.family?.invite_code)}">Salin kode</button>
         <button class="btn-primary" data-share-invite>Bagikan undangan</button></span>
       </div>
+    </div>
+    <div class="card pad">
+      <div class="card-h"><h3>Kelola</h3></div>
+      <button type="button" class="set-link" data-view="rekening"><span class="mi-ic ic-blue">${ic('wallet')}</span><span class="sl-t"><b>Rekening &amp; Tabungan</b><small>Tambah, ubah, atau hapus rekening</small></span>${ic('chevR')}</button>
+      <button type="button" class="set-link" data-view="anggaran"><span class="mi-ic ic-blue">${ic('pie')}</span><span class="sl-t"><b>Anggaran</b><small>Atur batas pengeluaran per kategori</small></span>${ic('chevR')}</button>
     </div>
     <div class="card pad">
       <div class="card-h"><h3>Anggota</h3></div>
