@@ -715,12 +715,15 @@ function syncShare() {
   const f = $('#form-add');
   const acc = S.accounts.find((x) => x.id === f.account.value);
   const fam = !!(acc && isFamilyAcc(acc));
-  if (fam) f.shared.checked = true;
-  f.shared.disabled = fam;
+  // pindah dari rekening keluarga ke pribadi: mulai dari "Pribadi"
+  if (f.dataset.fam === '1' && !fam) f.shared.checked = false;
+  f.dataset.fam = fam ? '1' : '0';
+  if (fam) f.shared.checked = true;              // rekening keluarga selalu dibagikan
+  $('#share-row').classList.toggle('hidden', fam); // jadi tombolnya tidak perlu tampil
   const on = f.shared.checked;
   $('#share-ic').innerHTML = ic(on ? 'users' : 'lock');
-  $('#share-b').textContent = on ? 'Dibagikan ke keluarga' : 'Pribadi';
-  $('#share-s').textContent = fam ? 'Rekening keluarga otomatis dibagikan' : (on ? 'Terlihat oleh seluruh keluarga' : 'Hanya Anda yang melihat');
+  $('#share-b').textContent = on ? 'Bagikan ke keluarga' : 'Pribadi';
+  $('#share-s').textContent = on ? 'Terlihat oleh seluruh keluarga' : 'Hanya Anda yang melihat';
 }
 
 function openAdd() {
@@ -732,6 +735,7 @@ function openAdd() {
   f.category.innerHTML = catOptions('expense', 'Lainnya');
   f.account.innerHTML = accountOptions((a) => isMine(a) || isFamilyAcc(a))
     || '<option value="">(belum ada rekening)</option>';
+  f.dataset.fam = '0';
   syncShare();
   $('#dlg-add').showModal();
   setTimeout(() => f.amount.focus(), 50);
