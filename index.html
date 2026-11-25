@@ -15,7 +15,7 @@
 <script>
 (function(){try{var m=localStorage.getItem('hm_theme')||'auto';var d=m==='dark'||(m==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();
 </script>
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 
@@ -99,7 +99,11 @@
     <label class="fld">Rekening
       <select class="inp" name="account"></select>
     </label>
-    <label class="check"><input type="checkbox" name="shared"> Bagikan ke keluarga <small class="muted">(kosong = pribadi)</small></label>
+    <label class="share-row">
+      <span class="share-ic" id="share-ic"></span>
+      <span class="share-t"><b id="share-b">Pribadi</b><small id="share-s">Hanya Anda yang melihat</small></span>
+      <input type="checkbox" name="shared" class="sw" aria-label="Bagikan ke keluarga">
+    </label>
     <div class="row-btn end">
       <button type="button" class="btn-ghost" data-close>Batal</button>
       <button class="btn-primary">Simpan</button>
@@ -111,18 +115,25 @@
 <dialog id="dlg-withdraw">
   <form id="form-withdraw">
     <div class="dlg-h"><h3>Catat Tarik Tunai</h3><button type="button" class="x" data-close aria-label="Tutup">✕</button></div>
+    <div class="seg" id="wd-type">
+      <button type="button" data-addtype="expense">Pengeluaran</button>
+      <button type="button" data-addtype="income">Pemasukan</button>
+      <button type="button" class="on" data-addtype="withdrawal">Tarik tunai</button>
+    </div>
     <input type="hidden" name="pendingId">
     <input class="inp big" name="amount" type="text" inputmode="numeric" autocomplete="off" data-money placeholder="Rp 0" required>
     <label class="fld">Dari rekening <select class="inp" name="account"></select></label>
-    <div class="modes">
-      <label class="check"><input type="radio" name="mode" value="wallet" checked> Masuk dompet (belum dipakai)</label>
-      <label class="check"><input type="radio" name="mode" value="spend"> Sudah dibelanjakan</label>
+    <div class="modes2">
+      <label class="mode-card"><input type="radio" name="mode" value="wallet" checked>
+        <span class="mc-ic" data-mic="wallet"></span><span class="mc-t"><b>Simpan di dompet</b><small>Uang belum dipakai</small></span></label>
+      <label class="mode-card"><input type="radio" name="mode" value="spend">
+        <span class="mc-ic" data-mic="cart"></span><span class="mc-t"><b>Sudah dibelanjakan</b><small>Catat untuk apa</small></span></label>
     </div>
     <div id="wd-spend" class="stack hidden">
       <input class="inp" name="desc" placeholder="Untuk apa? misal: bayar parkir" autocomplete="off">
       <select class="inp" name="category"></select>
     </div>
-    <label class="fld">Dompet tujuan <select class="inp" name="cash"></select></label>
+    <label class="fld hidden" id="wd-cash">Dompet tujuan <select class="inp" name="cash"></select></label>
     <div class="row-btn end">
       <button type="button" class="btn-ghost" data-close>Batal</button>
       <button class="btn-primary">Simpan</button>
@@ -166,6 +177,6 @@
   </div>
 </dialog>
 <div id="toast"></div>
-<script type="module" src="app.js?v=6"></script>
+<script type="module" src="app.js?v=7"></script>
 </body>
 </html>

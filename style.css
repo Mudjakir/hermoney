@@ -528,3 +528,65 @@ html[data-theme="dark"] .btn-danger.solid{background:#ef4444;color:#fff}
 @media (max-width:860px){.bn-btn{width:100%;text-align:center;padding:10px 14px}}
 #dlg-confirm .row-btn{display:flex;flex-direction:row;gap:12px;width:100%}
 #dlg-confirm .row-btn button{flex:1 1 0;min-width:0;height:52px;border-radius:16px;font-weight:700;font-size:16px;padding:0 12px}
+
+/* ===== Perapian ===== */
+/* baris transaksi: ketuk untuk Ubah / Hapus */
+.mi{flex-wrap:wrap}
+.mi.tap{cursor:pointer;transition:background .15s}
+.mi.tap:hover{background:rgba(110,160,255,.07)}
+.mi.open{background:rgba(110,160,255,.10);border-radius:16px}
+.mi-act{display:none;flex:0 0 100%;order:5;justify-content:flex-end;gap:10px;padding:2px 0 4px}
+.mi.open .mi-act{display:flex}
+.btn-ghost.sm,.btn-danger.sm{height:38px;padding:0 16px;border-radius:12px;font-size:14px;gap:6px}
+.btn-ghost.sm .ic,.btn-danger.sm .ic{width:16px;height:16px}
+.btn-danger.sm{background:#fff1f1;border:1px solid #ffd3d3}
+.rowbtns{display:inline-flex;gap:4px}
+.rowbtn{width:34px;height:34px;border-radius:10px;display:inline-grid;place-items:center;color:#7a89aa;transition:.15s}
+.rowbtn .ic{width:17px;height:17px}
+.rowbtn:hover{background:#eef3fc;color:#2563eb}
+.rowbtn.del:hover{background:#fff1f1;color:#dc2626}
+html[data-theme="dark"] .rowbtn{color:#8c9cc2}
+html[data-theme="dark"] .rowbtn:hover{background:rgba(255,255,255,.08);color:#a9c9ff}
+html[data-theme="dark"] .rowbtn.del:hover{background:rgba(239,68,68,.16);color:#ff9d9d}
+html[data-theme="dark"] .mi.open,html[data-theme="dark"] .mi.tap:hover{background:rgba(110,160,255,.10)}
+html[data-theme="dark"] .btn-danger.sm{background:rgba(239,68,68,.16);border-color:rgba(239,68,68,.25);color:#ff9d9d}
+
+/* tombol geser pribadi / keluarga */
+.share-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:rgba(110,160,255,.12);border:1px solid var(--edge);cursor:pointer}
+.share-ic{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.7);color:var(--blue)}
+.share-ic .ic{width:20px;height:20px}
+.share-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.share-t b{font-weight:700;font-size:15px}
+.share-t small{color:var(--mut);font-size:12.5px}
+.sw{appearance:none;-webkit-appearance:none;flex:none;width:50px;height:30px;border-radius:999px;background:#cdd8ee;position:relative;cursor:pointer;transition:background .2s;margin:0;border:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:transform .2s}
+.sw:checked{background:linear-gradient(135deg,#3b8bff,#1f62f0)}
+.sw:checked::after{transform:translateX(20px)}
+.sw:disabled{opacity:.6;cursor:default}
+html[data-theme="dark"] .share-ic{background:rgba(255,255,255,.08)}
+html[data-theme="dark"] .sw{background:rgba(255,255,255,.18)}
+
+/* pilihan tarik tunai berupa dua kartu */
+.modes2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mode-card{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:14px;border-radius:18px;border:1.5px solid var(--edge);background:rgba(255,255,255,.4);cursor:pointer;transition:.15s}
+.mode-card input{position:absolute;opacity:0;pointer-events:none}
+.mc-ic{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(110,160,255,.18);color:var(--blue)}
+.mc-ic .ic{width:20px;height:20px}
+.mc-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.mc-t b{font-weight:700;font-size:14.5px;line-height:1.25}
+.mc-t small{color:var(--mut);font-size:12.5px;line-height:1.3}
+.mode-card:has(input:checked){border-color:var(--blue2);background:rgba(110,160,255,.20);box-shadow:0 0 0 3px rgba(59,139,255,.15)}
+.mode-card:has(input:checked)::after{content:"✓";position:absolute;top:10px;right:12px;width:20px;height:20px;border-radius:50%;background:var(--blue2);color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center}
+html[data-theme="dark"] .mode-card{background:rgba(255,255,255,.05)}
+
+/* menu bawah di HP: melayang, bulat, rapi (Safari & Chrome) */
+@media (max-width:860px){
+  .tabbar{left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));border-radius:28px;border:1px solid var(--edge);
+    background:rgba(255,255,255,.80);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);
+    box-shadow:0 14px 34px rgba(37,70,150,.22),inset 0 1px 0 rgba(255,255,255,.9);padding:8px 6px}
+  .tab{border-radius:20px;transition:background .15s,color .15s}
+  .tab.active{background:rgba(37,99,235,.10)}
+  .main{padding-bottom:calc(128px + env(safe-area-inset-bottom))}
+  html[data-theme="dark"] .tabbar{background:rgba(16,24,50,.82);border-color:rgba(255,255,255,.10);box-shadow:0 14px 34px rgba(0,0,0,.5)}
+  html[data-theme="dark"] .tab.active{background:rgba(110,160,255,.16)}
+}

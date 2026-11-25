@@ -93,6 +93,8 @@ const P = {
   arrowDown: '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>',
   arrowUp: '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>',
   users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  close: '<path d="M18 6 6 18M6 6l12 12"/>',
   lock: '<rect x="3" y="11" width="18" height="11" rx="3"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
   chev: '<polyline points="6 9 12 15 18 9"/>',
@@ -351,13 +353,15 @@ function miItem(t) {
   const v = txView(t);
   const [i, fg, bg] = catStyle(v.cat);
   const other = t.owner_id !== myId() ? ` · ${esc(memberName(t.owner_id))}` : '';
+  const own = t.owner_id === myId() && !v.pend;
   const act = v.pend
     ? `<button class="pill" data-classify="${t.id}">Catat</button>`
-    : `${labelChip(t, v)}${t.owner_id === myId() ? `<button class="dots" data-edit="${t.id}" aria-label="Aksi">${ic('dots')}</button>` : ''}`;
-  return `<div class="mi">
+    : labelChip(t, v);
+  return `<div class="mi${own ? ' tap' : ''}"${own ? ` data-row="${t.id}"` : ''}>
     <span class="mi-ic" style="background:${bg};color:${fg}">${ic(i)}</span>
     <div class="mi-b"><small>${fmtDate(t.txn_date)}${other}</small><b>${esc(v.title)}</b></div>
     <div class="mi-r"><span class="amt ${v.cls}">${v.amount}</span><span class="mi-r2">${act}</span></div>
+    ${own ? `<div class="mi-act"><button type="button" class="btn-ghost sm" data-edit="${t.id}">${ic('pencil')}Ubah</button><button type="button" class="btn-danger sm" data-delrow="${t.id}">${ic('close')}Hapus</button></div>` : ''}
   </div>`;
 }
 
@@ -528,7 +532,7 @@ function updateTxnArea() {
       <td class="r"><span class="amt ${v.cls}">${v.amount}</span></td>
       <td>${labelChip(t, v)}</td>
       <td class="act">${v.pend ? `<button class="pill" data-classify="${t.id}">Catat</button>`
-        : mine ? `<button class="dots" data-edit="${t.id}" aria-label="Aksi">${ic('dots')}</button>` : ''}</td>
+        : mine ? `<span class="rowbtns"><button type="button" class="rowbtn" data-edit="${t.id}" aria-label="Ubah" title="Ubah">${ic('pencil')}</button><button type="button" class="rowbtn del" data-delrow="${t.id}" aria-label="Hapus" title="Hapus">${ic('close')}</button></span>` : ''}</td>
     </tr>`;
   }).join('');
 
@@ -692,15 +696,11 @@ function renderPengaturan() {
     </div>
     <div class="card pad stack">
       <h3>Cadangan data</h3>
-      <div class="muted small">Unduh salinan catatan keuangan Anda. Berkas CSV bisa dibuka di Excel atau Google Sheets. Cadangan lengkap (JSON) disimpan sebagai arsip.</div>
+      <div class="muted small">Simpan salinan catatan keuangan Anda: Excel (CSV) untuk dibuka di laptop, atau cadangan lengkap sebagai arsip.</div>
       <div class="row-btn start">
         <button class="btn-ghost" data-export="csv">Unduh Excel (CSV)</button>
         <button class="btn-ghost" data-export="json">Unduh cadangan lengkap</button>
       </div>
-    </div>
-    <div class="card pad stack">
-      <h3>Catatan penting</h3>
-      <div class="muted small">Database gratis akan tidur jika tidak dipakai sekitar 7 hari. Cukup buka aplikasi ini lalu tunggu beberapa menit, data Anda tetap aman. Sebaiknya unduh cadangan sebulan sekali.</div>
     </div>
     <div class="card pad stack">
       <h3>Akun</h3>
@@ -711,24 +711,47 @@ function renderPengaturan() {
 }
 
 // ================= Aksi =================
+function syncShare() {
+  const f = $('#form-add');
+  const acc = S.accounts.find((x) => x.id === f.account.value);
+  const fam = !!(acc && isFamilyAcc(acc));
+  if (fam) f.shared.checked = true;
+  f.shared.disabled = fam;
+  const on = f.shared.checked;
+  $('#share-ic').innerHTML = ic(on ? 'users' : 'lock');
+  $('#share-b').textContent = on ? 'Dibagikan ke keluarga' : 'Pribadi';
+  $('#share-s').textContent = fam ? 'Rekening keluarga otomatis dibagikan' : (on ? 'Terlihat oleh seluruh keluarga' : 'Hanya Anda yang melihat');
+}
+
 function openAdd() {
   const f = $('#form-add');
   f.reset();
   delete f.category.dataset.manual;
   f.dataset.type = 'expense';
-  document.querySelectorAll('[data-addtype]').forEach((b) => b.classList.toggle('on', b.dataset.addtype === 'expense'));
+  document.querySelectorAll('#add-type [data-addtype]').forEach((b) => b.classList.toggle('on', b.dataset.addtype === 'expense'));
   f.category.innerHTML = catOptions('expense', 'Lainnya');
   f.account.innerHTML = accountOptions((a) => isMine(a) || isFamilyAcc(a))
     || '<option value="">(belum ada rekening)</option>';
+  syncShare();
   $('#dlg-add').showModal();
   setTimeout(() => f.amount.focus(), 50);
 }
 
 function setAddType(type) {
-  if (type === 'withdrawal') { $('#dlg-add').close(); return openWithdraw(); }
+  if (type === 'withdrawal') {
+    const amt = $('#form-add').amount.value;
+    $('#dlg-add').close(); openWithdraw();
+    $('#form-withdraw').amount.value = amt;
+    return;
+  }
+  if ($('#dlg-withdraw').open) {   // kembali dari Tarik tunai ke Pengeluaran / Pemasukan
+    const amt = $('#form-withdraw').amount.value;
+    $('#dlg-withdraw').close(); openAdd();
+    $('#form-add').amount.value = amt;
+  }
   const f = $('#form-add');
   f.dataset.type = type;
-  document.querySelectorAll('[data-addtype]').forEach((b) => b.classList.toggle('on', b.dataset.addtype === type));
+  document.querySelectorAll('#add-type [data-addtype]').forEach((b) => b.classList.toggle('on', b.dataset.addtype === type));
   delete f.category.dataset.manual;
   f.category.innerHTML = catOptions(type, guess(f.desc.value));
 }
@@ -755,6 +778,13 @@ async function saveTxn(f) {
   await refresh();
 }
 
+function syncWd() {
+  const f = $('#form-withdraw');
+  const mode = f.querySelector('[name=mode]:checked').value;
+  $('#wd-spend').classList.toggle('hidden', mode === 'wallet');
+  $('#wd-cash').classList.toggle('hidden', mode === 'spend' || f.cash.options.length < 2);
+}
+
 function openWithdraw(pendingId) {
   const f = $('#form-withdraw');
   const pending = pendingId ? S.txns.find((t) => t.id === pendingId) : null;
@@ -764,17 +794,26 @@ function openWithdraw(pendingId) {
   f.account.innerHTML = accountOptions((a) => a.kind !== 'cash' && (isMine(a) || isFamilyAcc(a)), pending?.account_id);
   const cash = S.accounts.filter((a) => a.kind === 'cash' && (isMine(a) || isFamilyAcc(a)));
   f.cash.innerHTML = cash.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join('')
-    || '<option value="">(belum ada Dompet Tunai)</option>';
+    || '<option value="">Dompet Tunai (dibuat otomatis)</option>';
   f.category.innerHTML = catOptions('expense', 'Lainnya');
-  $('#wd-spend').classList.add('hidden');
+  document.querySelectorAll('[data-mic]').forEach((el) => { el.innerHTML = ic(el.dataset.mic); });
+  $('#wd-type').classList.toggle('hidden', !!pending);   // tarik tunai dari email: jenisnya sudah pasti
+  document.querySelectorAll('#wd-type [data-addtype]').forEach((b) => b.classList.toggle('on', b.dataset.addtype === 'withdrawal'));
+  syncWd();
   $('#dlg-withdraw').showModal();
 }
 
 async function saveWithdraw(f) {
   const mode = f.querySelector('[name=mode]:checked').value;
-  const cashId = f.cash.value || null;
+  let cashId = f.cash.value || null;
   const desc = f.desc.value.trim();
-  if (mode === 'wallet' && !cashId) return toast('Buat rekening Dompet Tunai dulu di menu Rekening');
+  if (num(f.amount.value) < 1) return toast('Isi jumlah uangnya dulu');
+  if (mode === 'wallet' && !cashId) {   // belum punya dompet: buatkan otomatis
+    const { data, error } = await sb.from('accounts')
+      .insert({ family_id: famId(), owner_id: myId(), name: 'Dompet Tunai', kind: 'cash', opening_balance: 0 }).select().single();
+    if (error || !data || !data.id) return toast(error ? error.message : 'Gagal membuat Dompet Tunai');
+    cashId = data.id;
+  }
 
   const account = S.accounts.find((a) => a.id === f.account.value);
   if (!account) return toast('Pilih rekening asal dulu');
@@ -783,7 +822,6 @@ async function saveWithdraw(f) {
     : { to_account_id: null, category: f.category.value, description: desc || 'Tarik tunai' };
   if (mode === 'spend' && desc) await learnRule(desc, f.category.value);
 
-  if (num(f.amount.value) < 1) return toast('Isi jumlah uangnya dulu');
   const payload = { ...fields, type: 'withdrawal', account_id: account.id, amount: num(f.amount.value), status: 'ok' };
   const { error } = f.pendingId.value
     ? await sb.from('transactions').update(payload).eq('id', f.pendingId.value)
@@ -941,6 +979,19 @@ document.addEventListener('click', async (e) => {
   if (sc) { S.scope = sc.dataset.scope; S.page = 1; S.sel.clear(); return render(); }
   const cl = t.closest('[data-classify]');
   if (cl) return openWithdraw(cl.dataset.classify);
+  if (!t.closest('.mi.open')) document.querySelectorAll('.mi.open').forEach((x) => x.classList.remove('open'));
+  const dr = t.closest('[data-delrow]');
+  if (dr) {
+    if (await askConfirm('Transaksi ini akan dihapus permanen dan tidak bisa dikembalikan.', 'Hapus', 'Hapus transaksi?')) await deleteTxns([dr.dataset.delrow]);
+    return;
+  }
+  const rw = t.closest('.mi[data-row]');
+  if (rw && !t.closest('button,a,input,select')) {
+    const was = rw.classList.contains('open');
+    document.querySelectorAll('.mi.open').forEach((x) => x.classList.remove('open'));
+    if (!was) rw.classList.add('open');
+    return;
+  }
   const ed = t.closest('[data-edit]');
   if (ed) return openEdit(ed.dataset.edit);
   if (t.closest('[data-open-add]')) return openAdd();
@@ -1011,6 +1062,10 @@ document.addEventListener('click', async (e) => {
   }
 });
 
+document.addEventListener('change', (e) => {
+  if (e.target.closest && e.target.closest('#form-add') && (e.target.name === 'shared' || e.target.name === 'account')) syncShare();
+});
+
 document.addEventListener('change', async (e) => {
   if (e.target.id !== 'photo-file') return;
   const file = e.target.files && e.target.files[0]; if (!file) return;
@@ -1072,7 +1127,7 @@ document.addEventListener('change', (e) => {
   if (map[t.id]) { S.f[map[t.id]] = t.value; S.page = 1; return updateTxnArea(); }
   if (t.id === 'month') { S.month = t.value; S.page = 1; return render(); }
   if (t.name === 'category' && t.closest('#form-add')) t.dataset.manual = '1';
-  if (t.name === 'mode' && t.closest('#form-withdraw')) $('#wd-spend').classList.toggle('hidden', t.value === 'wallet');
+  if (t.name === 'mode' && t.closest('#form-withdraw')) syncWd();
   if (t.dataset.sel) {
     if (t.checked) S.sel.add(t.dataset.sel); else S.sel.delete(t.dataset.sel);
     return updateTxnArea();
