@@ -93,6 +93,8 @@ const P = {
   arrowDown: '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>',
   arrowUp: '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>',
   users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
   pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
   close: '<path d="M18 6 6 18M6 6l12 12"/>',
   lock: '<rect x="3" y="11" width="18" height="11" rx="3"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
@@ -165,9 +167,11 @@ const num = (v) => Number(String(v ?? '').replace(/\D/g, '')) || 0;
 const avInner = (p) => (p && p.avatar_url ? `<img src="${esc(p.avatar_url)}" alt="">` : esc(initial(p && p.name)));
 const initial = (s) => (String(s || '?').trim()[0] || '?').toUpperCase();
 
+// cocok di awal kata: "tol" tidak cocok dengan "pentol"
+const wordHit = (t, k) => new RegExp('(^|[^a-z0-9])' + String(k).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(t);
 function guess(text) {
   const t = (text || '').toLowerCase();
-  const hit = S.rules.filter((r) => t.includes(r.keyword)).sort((a, b) => b.keyword.length - a.keyword.length)[0];
+  const hit = S.rules.filter((r) => wordHit(t, r.keyword)).sort((a, b) => b.keyword.length - a.keyword.length)[0];
   return hit ? hit.category : 'Lainnya';
 }
 function catOptions(type, selected) {
@@ -289,6 +293,7 @@ function scopeHtml() {
 
 function render() {
   const pend = S.txns.filter((t) => t.status === 'pending' && t.owner_id === myId());
+  const review = S.txns.filter((t) => t.needs_review && t.owner_id === myId());
 
   $('#nav').innerHTML = NAV.map(([v, l, i]) =>
     `<button class="nav ${S.view === v ? 'active' : ''}" data-view="${v}">${ic(i)}<span>${l}</span></button>`).join('');
@@ -296,7 +301,7 @@ function render() {
     `<button class="tab ${S.view === v ? 'active' : ''}" data-view="${v}">${ic(i)}<span>${l}</span></button>`).join('');
   $('#scope').innerHTML = scopeHtml();
   $('#m-scope').innerHTML = scopeHtml();
-  const noScope = S.view === 'pengaturan';   // Pengaturan bukan halaman "hasil"
+  const noScope = ['pengaturan', 'rekening', 'anggaran'].includes(S.view);   // Pengaturan bukan halaman "hasil"
   $('#scope').classList.toggle('hidden', noScope);
   $('#m-scope').classList.toggle('hidden', noScope);
 
@@ -313,12 +318,17 @@ function render() {
   $('#btn-theme').innerHTML = ic(isDark() ? 'sun' : 'moon');
 
   const badge = $('#badge');
-  badge.classList.toggle('hidden', !pend.length);
-  badge.textContent = pend.length;
+  const nPend = pend.length + review.length;
+  badge.classList.toggle('hidden', !nPend);
+  badge.textContent = nPend;
 
-  $('#banner').innerHTML = pend.length
+  const bnPend = pend.length
     ? `<div class="banner"><span class="bn-t"><span class="bn-ic">${ic('wallet')}</span><span>Ada ${pend.length} tarik tunai menunggu dicatat. Untuk apa uangnya?</span></span><button class="pill bn-btn" data-classify="${pend[0].id}">Catat sekarang</button></div>`
     : '';
+  const bnRev = review.length
+    ? `<div class="banner rv"><span class="bn-t"><span class="bn-ic">${ic('check')}</span><span>Ada ${review.length} transaksi dari email yang belum dikategorikan.</span></span><button class="pill bn-btn rv-btn" data-review="${review[0].id}">Kategorikan</button></div>`
+    : '';
+  $('#banner').innerHTML = bnPend + bnRev;
 
   ({
     dashboard: renderDashboard, transaksi: renderTransaksi, rekening: renderRekening,
@@ -359,10 +369,11 @@ function miItem(t) {
   const v = txView(t);
   const [i, fg, bg] = catStyle(v.cat);
   const other = t.owner_id !== myId() ? ` · ${esc(memberName(t.owner_id))}` : '';
-  const own = t.owner_id === myId() && !v.pend;
+  const rev = !!t.needs_review && t.owner_id === myId();
+  const own = t.owner_id === myId() && !v.pend && !rev;
   const act = v.pend
     ? `<button class="pill" data-classify="${t.id}">Catat</button>`
-    : labelChip(t, v);
+    : rev ? `<button class="pill rv-btn" data-review="${t.id}">Kategorikan</button>` : labelChip(t, v);
   return `<div class="mi${own ? ' tap' : ''}"${own ? ` data-row="${t.id}"` : ''}>
     <span class="mi-ic" style="background:${bg};color:${fg}">${ic(i)}</span>
     <div class="mi-b"><small>${fmtDate(t.txn_date)}${other}</small><b>${esc(v.title)}</b></div>
@@ -422,7 +433,7 @@ function renderDashboard() {
 
 // ================= Transaksi =================
 const RANGE = [['month', 'Tanggal'], ['7', '7 hari terakhir'], ['30', '30 hari terakhir'], ['all', 'Semua waktu']];
-const KINDF = [['', 'Filter'], ['income', 'Pemasukan'], ['expense', 'Pengeluaran'], ['withdraw', 'Tarik tunai'], ['pending', 'Belum dicatat']];
+const KINDF = [['', 'Filter'], ['income', 'Pemasukan'], ['expense', 'Pengeluaran'], ['withdraw', 'Tarik tunai'], ['pending', 'Belum dicatat / dikategorikan']];
 
 const opts = (arr, sel) => arr.map(([v, l]) => `<option value="${esc(v)}" ${v === sel ? 'selected' : ''}>${esc(l)}</option>`).join('');
 
@@ -463,7 +474,7 @@ function filteredTxns() {
   if (f.kind === 'income') list = list.filter((t) => t.type === 'income');
   else if (f.kind === 'expense') list = list.filter(isSpend);
   else if (f.kind === 'withdraw') list = list.filter((t) => t.type === 'withdrawal');
-  else if (f.kind === 'pending') list = list.filter((t) => t.status === 'pending');
+  else if (f.kind === 'pending') list = list.filter((t) => t.status === 'pending' || t.needs_review);
   return list;
 }
 
@@ -537,7 +548,7 @@ function updateTxnArea() {
       <td><span class="acc-c">${ic(acc ? KIND_IC[acc.kind] : 'bank')}${esc(accName(t.account_id))}</span></td>
       <td class="r"><span class="amt ${v.cls}">${v.amount}</span></td>
       <td>${labelChip(t, v)}</td>
-      <td class="act">${v.pend ? `<button class="pill" data-classify="${t.id}">Catat</button>`
+      <td class="act">${v.pend ? `<button class="pill" data-classify="${t.id}">Catat</button>` : (t.needs_review && mine) ? `<button class="pill rv-btn" data-review="${t.id}">Kategorikan</button>`
         : mine ? `<span class="rowbtns"><button type="button" class="rowbtn" data-edit="${t.id}" aria-label="Ubah" title="Ubah">${ic('pencil')}</button><button type="button" class="rowbtn del" data-delrow="${t.id}" aria-label="Hapus" title="Hapus">${ic('close')}</button></span>` : ''}</td>
     </tr>`;
   }).join('');
@@ -664,60 +675,38 @@ function renderLaporan() {
 
 // ================= Pengaturan =================
 function renderPengaturan() {
-  $('#page').innerHTML = `<div class="page">
+  const p = S.profile, hasPic = !!p.avatar_url;
+  $('#page').innerHTML = `<div class="page set-page">
     ${head('Pengaturan', 'gear')}
-    <div class="card pad stack">
-      <h3>Keluarga</h3>
-      <div>Nama keluarga: <b>${esc(S.family?.name)}</b></div>
-      <div class="row-btn">
-        <span>Kode undangan untuk pasangan: <span class="code">${esc(S.family?.invite_code)}</span></span>
-        <span class="row-btn"><button class="btn-ghost" data-copy="${esc(S.family?.invite_code)}">Salin kode</button>
-        <button class="btn-primary" data-share-invite>Bagikan undangan</button></span>
+
+    <div class="card pad prof">
+      <button type="button" class="avatar big${hasPic ? ' has-img' : ''}" data-pick-photo aria-label="Ganti foto profil">${avInner(p)}<span class="cam">${ic('pencil')}</span></button>
+      <div class="prof-t">
+        <b>${esc(p.name)}</b>
+        <small>${esc(S.user.email)}</small>
+        <span class="prof-a"><button type="button" class="link" data-pick-photo>${hasPic ? 'Ganti foto' : 'Tambah foto'}</button>${hasPic ? '<button type="button" class="link del" data-del-photo>Hapus</button>' : ''}</span>
       </div>
+      <input type="file" id="photo-file" accept="image/*" hidden>
     </div>
-    <div class="card pad">
-      <div class="card-h"><h3>Kelola</h3></div>
-      <button type="button" class="set-link" data-view="rekening"><span class="mi-ic ic-blue">${ic('wallet')}</span><span class="sl-t"><b>Rekening &amp; Tabungan</b><small>Tambah, ubah, atau hapus rekening</small></span>${ic('chevR')}</button>
-      <button type="button" class="set-link" data-view="anggaran"><span class="mi-ic ic-blue">${ic('pie')}</span><span class="sl-t"><b>Anggaran</b><small>Atur batas pengeluaran per kategori</small></span>${ic('chevR')}</button>
+
+    <div class="card pad fam">
+      <div class="fam-h"><span class="fam-n"><small>Keluarga</small><b>${esc(S.family?.name)}</b></span>
+        <span class="fam-m">${S.members.map((m) => `<span class="avatar xs${m.avatar_url ? ' has-img' : ''}" title="${esc(m.name)}">${avInner(m)}</span>`).join('')}</span></div>
+      <div class="fam-c"><span class="muted small">Kode undangan</span><span class="code">${esc(S.family?.invite_code)}</span>
+        <span class="fam-b"><button class="btn-ghost sm" data-copy="${esc(S.family?.invite_code)}">Salin</button><button class="btn-primary sm" data-share-invite>Bagikan</button></span></div>
     </div>
-    <div class="card pad">
-      <div class="card-h"><h3>Anggota</h3></div>
-      ${S.members.map((m) => `<div class="acc-row"><span class="avatar sm${m.avatar_url ? ' has-img' : ''}">${avInner(m)}</span>
-        <div><b>${esc(m.name)}</b><small>${m.id === myId() ? 'Anda' : 'Pasangan'}</small></div></div>`).join('')}
+
+    <div class="card pad list">
+      <button type="button" class="set-link" data-view="rekening"><span class="mi-ic ic-blue">${ic('wallet')}</span><span class="sl-t"><b>Rekening &amp; Tabungan</b></span>${ic('chevR')}</button>
+      <button type="button" class="set-link" data-view="anggaran"><span class="mi-ic ic-blue">${ic('pie')}</span><span class="sl-t"><b>Anggaran</b></span>${ic('chevR')}</button>
+      <div class="set-row"><span class="mi-ic ic-blue">${ic('moon')}</span><span class="sl-t"><b>Tampilan</b></span>
+        <span class="seg sm">${[['auto', 'Auto'], ['light', 'Terang'], ['dark', 'Gelap']].map(([m, l]) =>
+          `<button type="button" class="${getMode() === m ? 'on' : ''}" data-theme-mode="${m}">${l}</button>`).join('')}</span></div>
+      <div class="set-row"><span class="mi-ic ic-blue">${ic('download')}</span><span class="sl-t"><b>Cadangan</b></span>
+        <span class="set-b"><button class="btn-ghost sm" data-export="csv">Excel</button><button class="btn-ghost sm" data-export="json">Arsip</button></span></div>
     </div>
-    <div class="card pad stack">
-      <h3>Foto profil</h3>
-      <div class="photo-row">
-        <button type="button" class="avatar big${S.profile.avatar_url ? ' has-img' : ''}" data-pick-photo aria-label="Ganti foto profil">${avInner(S.profile)}</button>
-        <div class="photo-act">
-          <button type="button" class="btn-ghost" data-pick-photo>${S.profile.avatar_url ? 'Ganti foto' : 'Pilih foto'}</button>
-          ${S.profile.avatar_url ? '<button type="button" class="btn-ghost btn-danger" data-del-photo>Hapus foto</button>' : ''}
-          <small class="muted">Foto dipakai di pojok kanan atas dan daftar anggota.</small>
-        </div>
-        <input type="file" id="photo-file" accept="image/*" hidden>
-      </div>
-    </div>
-    <div class="card pad stack">
-      <h3>Tampilan</h3>
-      <div class="seg">
-        ${[['auto', 'Otomatis'], ['light', 'Terang'], ['dark', 'Gelap']].map(([m, l]) =>
-          `<button type="button" class="${getMode() === m ? 'on' : ''}" data-theme-mode="${m}">${l}</button>`).join('')}
-      </div>
-      <div class="muted small">Otomatis mengikuti pengaturan terang atau gelap di HP atau laptop Anda.</div>
-    </div>
-    <div class="card pad stack">
-      <h3>Cadangan data</h3>
-      <div class="muted small">Simpan salinan catatan keuangan Anda: Excel (CSV) untuk dibuka di laptop, atau cadangan lengkap sebagai arsip.</div>
-      <div class="row-btn start">
-        <button class="btn-ghost" data-export="csv">Unduh Excel (CSV)</button>
-        <button class="btn-ghost" data-export="json">Unduh cadangan lengkap</button>
-      </div>
-    </div>
-    <div class="card pad stack">
-      <h3>Akun</h3>
-      <div class="muted">Masuk sebagai ${esc(S.user.email)}</div>
-      <div><button class="btn-ghost" id="btn-logout">Keluar</button></div>
-    </div>
+
+    <button class="btn-ghost logout" id="btn-logout">Keluar</button>
   </div>`;
 }
 
@@ -863,6 +852,7 @@ function openEdit(id) {
   f.visibility.value = t.visibility;
   f.visibility.disabled = !!(acc && isFamilyAcc(acc));
   $('#edit-info').textContent = `${fmtDate(t.txn_date)} · ${rp(t.amount)} · ${accName(t.account_id)}`;
+  $('#dlg-edit h3').textContent = t.needs_review ? 'Kategorikan transaksi' : 'Ubah Transaksi';
   $('#dlg-edit').showModal();
 }
 
@@ -871,7 +861,7 @@ async function saveEdit(f) {
   if (!t) return;
   const v = txView(t);
   const desc = f.desc.value.trim() || t.description;
-  const upd = { description: desc, visibility: f.visibility.disabled ? 'shared' : f.visibility.value };
+  const upd = { description: desc, visibility: f.visibility.disabled ? 'shared' : f.visibility.value, needs_review: false };
   if (!v.wallet) {
     upd.category = f.category.value;
     if (upd.category !== t.category) await learnRule(desc, upd.category);
@@ -879,7 +869,7 @@ async function saveEdit(f) {
   const { error } = await sb.from('transactions').update(upd).eq('id', t.id);
   if (error) return toast(error.message);
   $('#dlg-edit').close();
-  toast('Tersimpan');
+  toast(t.needs_review ? 'Kategori disimpan' : 'Tersimpan');
   await refresh();
 }
 
@@ -1007,6 +997,8 @@ document.addEventListener('click', async (e) => {
     if (!was) rw.classList.add('open');
     return;
   }
+  const rvb = t.closest('[data-review]');
+  if (rvb) return openEdit(rvb.dataset.review);
   const ed = t.closest('[data-edit]');
   if (ed) return openEdit(ed.dataset.edit);
   if (t.closest('[data-open-add]')) return openAdd();
@@ -1057,7 +1049,9 @@ document.addEventListener('click', async (e) => {
   if (cls) return cls.closest('dialog').close();
   if (t.closest('#btn-bell')) {
     const p = S.txns.find((x) => x.status === 'pending' && x.owner_id === myId());
-    return p ? openWithdraw(p.id) : toast('Tidak ada pengingat baru');
+    const r = S.txns.find((x) => x.needs_review && x.owner_id === myId());
+    if (p) return openWithdraw(p.id);
+    return r ? openEdit(r.id) : toast('Tidak ada pengingat baru');
   }
   if (t.closest('[data-share-invite]')) return shareInvite();
   const ex = t.closest('[data-export]');
