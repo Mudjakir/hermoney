@@ -657,3 +657,17 @@ html[data-theme="dark"] .prof-a .link.del{color:#ff9d9d}
 .bn-btn.rv,.rv-btn{background:var(--blue);color:#fff;box-shadow:0 6px 14px rgba(37,99,235,.3)}
 html[data-theme="dark"] .banner.rv{background:rgba(96,150,255,.14);color:#a9c9ff;border-left-color:#5b9bff}
 html[data-theme="dark"] .banner.rv .bn-ic{background:rgba(96,150,255,.25);color:#b5d2ff}
+
+/* baris pilihan di Pengaturan */
+.set-link .sl-v{color:var(--mut);font-size:14px;flex:none}
+.pick-list{display:flex;flex-direction:column;gap:8px}
+.pick-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:14px 16px;border-radius:16px;text-align:left;color:inherit;
+  background:rgba(255,255,255,.55);border:1px solid var(--edge)}
+.pick-opt span{display:flex;flex-direction:column;gap:2px}
+.pick-opt small{color:var(--mut);font-size:13px}
+.pick-opt.on{border-color:#2563eb;background:rgba(37,99,235,.10)}
+.pick-opt .ic{width:20px;height:20px;color:#2563eb}
+html[data-theme="dark"] .pick-opt{background:rgba(255,255,255,.06)}
+html[data-theme="dark"] .pick-opt.on{background:rgba(110,160,255,.16);border-color:#6ea0ff}
+html[data-theme="dark"] .pick-opt .ic{color:#9cc0ff}
+#dlg-pick .dlg-h{margin-bottom:14px}

@@ -593,6 +593,7 @@ function renderRekening() {
         <div class="top2"><span class="mi-ic ic-blue">${ic(KIND_IC[a.kind])}</span>
           <div><b>${esc(a.name)}</b><br><small class="muted">${KIND[a.kind]} · ${a.owner_id ? esc(memberName(a.owner_id)) : 'Keluarga'}</small></div></div>
         <b class="big">${money(bal[a.id] || 0)}</b>
+        <button type="button" class="btn-ghost small" data-bal="${a.id}">Sesuaikan saldo</button>
       </div>`).join('') || '<p class="muted">Belum ada rekening.</p>'}
     </div>
   </div>`;
@@ -699,11 +700,8 @@ function renderPengaturan() {
     <div class="card pad list">
       <button type="button" class="set-link" data-view="rekening"><span class="mi-ic ic-blue">${ic('wallet')}</span><span class="sl-t"><b>Rekening &amp; Tabungan</b></span>${ic('chevR')}</button>
       <button type="button" class="set-link" data-view="anggaran"><span class="mi-ic ic-blue">${ic('pie')}</span><span class="sl-t"><b>Anggaran</b></span>${ic('chevR')}</button>
-      <div class="set-row"><span class="mi-ic ic-blue">${ic('moon')}</span><span class="sl-t"><b>Tampilan</b></span>
-        <span class="seg sm">${[['auto', 'Auto'], ['light', 'Terang'], ['dark', 'Gelap']].map(([m, l]) =>
-          `<button type="button" class="${getMode() === m ? 'on' : ''}" data-theme-mode="${m}">${l}</button>`).join('')}</span></div>
-      <div class="set-row"><span class="mi-ic ic-blue">${ic('download')}</span><span class="sl-t"><b>Cadangan</b></span>
-        <span class="set-b"><button class="btn-ghost sm" data-export="csv">Excel</button><button class="btn-ghost sm" data-export="json">Arsip</button></span></div>
+      <button type="button" class="set-link" data-pick="theme"><span class="mi-ic ic-blue">${ic('moon')}</span><span class="sl-t"><b>Tampilan</b></span><span class="sl-v">${{ auto: 'Otomatis', light: 'Terang', dark: 'Gelap' }[getMode()]}</span>${ic('chevR')}</button>
+      <button type="button" class="set-link" data-pick="backup"><span class="mi-ic ic-blue">${ic('download')}</span><span class="sl-t"><b>Cadangan</b></span>${ic('chevR')}</button>
     </div>
 
     <button class="btn-ghost logout" id="btn-logout">Keluar</button>
@@ -873,6 +871,49 @@ async function saveEdit(f) {
   await refresh();
 }
 
+// pindah halaman + simpan riwayat, supaya tombol Kembali di HP/browser kembali ke halaman sebelumnya
+function go(view) {
+  if (view !== S.view) history.pushState({ view }, '');
+  S.view = view; S.page = 1; render();
+}
+window.addEventListener('popstate', (e) => {
+  S.view = (e.state && e.state.view) || 'dashboard'; S.page = 1;
+  if (S.user) render();
+});
+try { history.replaceState({ view: S.view }, ''); } catch {}
+
+function openPick(kind) {
+  const cur = getMode();
+  const opts = kind === 'theme'
+    ? [['auto', 'Otomatis', 'Ikuti pengaturan HP'], ['light', 'Terang', ''], ['dark', 'Gelap', '']].map(([v, l, d]) => ({ k: 'theme:' + v, l, d, on: cur === v }))
+    : [{ k: 'backup:csv', l: 'Excel', d: 'Daftar transaksi, bisa dibuka di Excel' }, { k: 'backup:json', l: 'Arsip lengkap', d: 'Semua data, untuk disimpan sebagai cadangan' }];
+  $('#pick-title').textContent = kind === 'theme' ? 'Tampilan' : 'Cadangan data';
+  $('#pick-list').innerHTML = opts.map((o) => `<button type="button" class="pick-opt${o.on ? ' on' : ''}" data-pick-do="${o.k}"><span><b>${o.l}</b>${o.d ? `<small>${o.d}</small>` : ''}</span>${o.on ? ic('check') : ''}</button>`).join('');
+  $('#dlg-pick').showModal();
+}
+
+function openBal(id) {
+  const acc = S.accounts.find((x) => x.id === id); if (!acc) return;
+  const f = $('#form-bal');
+  f.accId.value = id;
+  $('#bal-info').textContent = acc.name + ' · saat ini ' + money(balances()[id] || 0);
+  f.target.value = fmtNum(balances()[id] || 0);
+  $('#dlg-bal').showModal();
+}
+
+async function saveBal(f) {
+  const id = f.accId.value;
+  const acc = S.accounts.find((x) => x.id === id); if (!acc) return;
+  const target = num(f.target.value);
+  // saldo awal baru = saldo asli - total transaksi yang sudah tercatat
+  const cur = balances()[id] || 0;
+  const { error } = await sb.from('accounts').update({ opening_balance: Number(acc.opening_balance) + (target - cur) }).eq('id', id);
+  if (error) return toast(error.message);
+  $('#dlg-bal').close();
+  toast('Saldo disesuaikan');
+  await refresh();
+}
+
 async function saveAccount(f) {
   const fd = new FormData(f);
   const { error } = await sb.from('accounts').insert({
@@ -979,7 +1020,7 @@ function askConfirm(msg, okLabel = 'Hapus', title = 'Yakin?') {
 document.addEventListener('click', async (e) => {
   const t = e.target;
   const v = t.closest('[data-view]');
-  if (v) { S.view = v.dataset.view; S.page = 1; render(); return window.scrollTo(0, 0); }
+  if (v) { go(v.dataset.view); return window.scrollTo(0, 0); }
   const sc = t.closest('[data-scope]');
   if (sc) { S.scope = sc.dataset.scope; S.page = 1; S.sel.clear(); return render(); }
   const cl = t.closest('[data-classify]');
@@ -997,6 +1038,8 @@ document.addEventListener('click', async (e) => {
     if (!was) rw.classList.add('open');
     return;
   }
+  const bl = t.closest('[data-bal]');
+  if (bl) return openBal(bl.dataset.bal);
   const rvb = t.closest('[data-review]');
   if (rvb) return openEdit(rvb.dataset.review);
   const ed = t.closest('[data-edit]');
@@ -1058,7 +1101,15 @@ document.addEventListener('click', async (e) => {
   if (ex) return exportData(ex.dataset.export);
   if (t.closest('[data-pick-photo]')) { const fi = $('#photo-file'); if (fi) fi.click(); return; }
   if (t.closest('[data-del-photo]')) return savePhoto(null);
-  if (t.closest('#btn-avatar')) { S.view = 'pengaturan'; return render(); }
+  if (t.closest('#btn-avatar')) return go('pengaturan');
+  const pk = t.closest('[data-pick]');
+  if (pk) return openPick(pk.dataset.pick);
+  const po = t.closest('[data-pick-do]');
+  if (po) {
+    const [k, v] = po.dataset.pickDo.split(':');
+    $('#dlg-pick').close();
+    return k === 'theme' ? setMode(v) : exportData(v);
+  }
   const tm = t.closest('[data-theme-mode]');
   if (tm) return setMode(tm.dataset.themeMode);
   if (t.closest('#btn-theme')) return setMode(isDark() ? 'light' : 'dark');
@@ -1101,6 +1152,7 @@ document.addEventListener('submit', async (e) => {
   else if (id === 'form-withdraw') await saveWithdraw(f);
   else if (id === 'form-edit') await saveEdit(f);
   else if (id === 'form-account') await saveAccount(f);
+  else if (id === 'form-bal') await saveBal(f);
   else if (id === 'form-budget') await saveBudget(f);
 });
 

@@ -15,7 +15,7 @@
 <script>
 (function(){try{var m=localStorage.getItem('hm_theme')||'auto';var d=m==='dark'||(m==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();
 </script>
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
 
@@ -142,6 +142,19 @@
 </dialog>
 
 <!-- Ubah transaksi -->
+<dialog id="dlg-pick">
+  <div class="dlg-h"><h3 id="pick-title"></h3><button type="button" class="x" data-close aria-label="Tutup">✕</button></div>
+  <div id="pick-list" class="pick-list"></div>
+</dialog>
+<dialog id="dlg-bal">
+  <form id="form-bal">
+    <div class="dlg-h"><h3>Sesuaikan saldo</h3><button type="button" class="x" data-close aria-label="Tutup">✕</button></div>
+    <input type="hidden" name="accId">
+    <p class="muted" id="bal-info" style="margin:0"></p>
+    <label class="fld">Saldo asli sekarang (Rp) <input class="inp" name="target" type="text" inputmode="numeric" autocomplete="off" data-money required></label>
+    <div class="row-btn"><span class="muted small">Cocokkan dengan saldo di m-banking. Transaksi yang sudah tercatat tetap dihitung.</span><button class="btn-primary">Simpan saldo</button></div>
+  </form>
+</dialog>
 <dialog id="dlg-edit">
   <form id="form-edit">
     <div class="dlg-h"><h3>Ubah Transaksi</h3><button type="button" class="x" data-close aria-label="Tutup">✕</button></div>
@@ -177,6 +190,6 @@
   </div>
 </dialog>
 <div id="toast"></div>
-<script type="module" src="app.js?v=13"></script>
+<script type="module" src="app.js?v=15"></script>
 </body>
 </html>
