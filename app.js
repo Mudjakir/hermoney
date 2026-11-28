@@ -201,7 +201,7 @@ const scoped = () => S.scope === 'mine'
   ? S.txns.filter((t) => t.owner_id === myId())
   : S.txns.filter((t) => t.visibility === 'shared');
 const scopeAccounts = () => S.scope === 'mine'
-  ? S.accounts.filter((a) => isMine(a) || isFamilyAcc(a))
+  ? S.accounts.filter(isMine)
   : S.accounts.filter(isFamilyAcc);
 
 const isSpend = (t) => t.type === 'expense' || (t.type === 'withdrawal' && !t.to_account_id);
@@ -344,7 +344,7 @@ function summary() {
   const st = monthStats(list);
   const bal = balances();
   const total = scopeAccounts().reduce((s, a) => s + (bal[a.id] || 0), 0);
-  const label = S.scope === 'mine' ? 'Saldo Total Saya' : 'Saldo Total Keluarga';
+  const label = S.scope === 'mine' ? 'Saldo Pribadi Saya' : 'Saldo Total Keluarga';
   return `<div class="sum">
     <div class="sum-d">
       <div class="card sc"><span class="circ in-c">${ic('arrowDown')}</span><div><small>Total Pemasukan</small><b>${rp(st.income)}</b></div></div>
