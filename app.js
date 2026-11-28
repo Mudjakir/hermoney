@@ -844,12 +844,13 @@ function openEdit(id) {
   const v = txView(t);
   f.txnId.value = t.id;
   f.desc.value = t.description || '';
+  f.date.value = t.txn_date;
   $('#edit-cat-wrap').classList.toggle('hidden', v.wallet);
   f.category.innerHTML = catOptions(t.type === 'income' ? 'income' : 'expense', t.category || 'Lainnya');
   const acc = S.accounts.find((a) => a.id === t.account_id);
   f.visibility.value = t.visibility;
   f.visibility.disabled = !!(acc && isFamilyAcc(acc));
-  $('#edit-info').textContent = `${fmtDate(t.txn_date)} · ${rp(t.amount)} · ${accName(t.account_id)}`;
+  $('#edit-info').textContent = `${rp(t.amount)} · ${accName(t.account_id)}`;
   $('#dlg-edit h3').textContent = t.needs_review ? 'Kategorikan transaksi' : 'Ubah Transaksi';
   $('#dlg-edit').showModal();
 }
@@ -860,6 +861,7 @@ async function saveEdit(f) {
   const v = txView(t);
   const desc = f.desc.value.trim() || t.description;
   const upd = { description: desc, visibility: f.visibility.disabled ? 'shared' : f.visibility.value, needs_review: false };
+  if (f.date.value) upd.txn_date = f.date.value;
   if (!v.wallet) {
     upd.category = f.category.value;
     if (upd.category !== t.category) await learnRule(desc, upd.category);
